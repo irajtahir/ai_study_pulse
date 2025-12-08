@@ -44,10 +44,9 @@ exports.login = async (req, res) => {
 // Get current user info
 exports.getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.userId).select('-password');
+    const user = req.user; // set by auth middleware
     res.json(user);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
