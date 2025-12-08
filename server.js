@@ -1,21 +1,22 @@
-require('dotenv').config();
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
-const connectDB = require('./config/db');
+require('dotenv').config();
+
+const authRoutes = require('./routes/auth');
+const activitiesRoutes = require('./routes/activities');
 
 const app = express();
-connectDB();
 
-app.use(cors());
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 
-// routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/activities', require('./routes/activities'));
-app.use('/api/quizzes', require('./routes/quizzes'));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('MongoDB connected'))
+  .catch((err) => console.error(err));
 
-// health
-app.get('/', (req, res) => res.send('AI Study Pulse API running'));
+app.use('/api/auth', authRoutes);
+app.use('/api/activities', activitiesRoutes);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
