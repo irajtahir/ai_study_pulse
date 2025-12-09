@@ -9,6 +9,7 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: 'User already exists' });
 
@@ -19,7 +20,7 @@ exports.register = async (req, res) => {
     const token = generateToken(user._id);
     res.status(201).json({ token });
   } catch (err) {
-    console.error(err);
+    console.error('Register error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
@@ -36,17 +37,18 @@ exports.login = async (req, res) => {
     const token = generateToken(user._id);
     res.json({ token });
   } catch (err) {
-    console.error(err);
+    console.error('Login error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-// Get current user info
 exports.getMe = async (req, res) => {
   try {
-    const user = req.user; // set by auth middleware
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (err) {
+    console.error('GetMe error:', err);
     res.status(500).json({ message: "Server error" });
   }
 };
