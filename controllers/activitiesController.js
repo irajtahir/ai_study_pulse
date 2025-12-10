@@ -59,7 +59,7 @@ exports.getStats = async (req, res) => {
     }
 
     // Total study hours
-    const totalStudyHours = activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0);
+    const totalStudyHours = Math.round((activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0) / 60) * 10) / 10;
 
     // Completion rate: % of activities that have duration > 0
     const completionRate = Math.round(
