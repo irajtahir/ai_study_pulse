@@ -2,7 +2,9 @@ const Activity = require('../models/Activity');
 
 exports.getUserActivities = async (req, res) => {
   try {
-    const activities = await Activity.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const activities = await Activity.find({ user: req.user._id })
+      .sort({ createdAt: -1 });
+
     res.json(activities);
   } catch (err) {
     console.error(err);
@@ -20,7 +22,7 @@ exports.createActivity = async (req, res) => {
       topic,
       durationMinutes: durationMinutes || 0,
       notes: notes || '',
-      accuracy: accuracy || null,
+      accuracy: accuracy ?? null,
     });
 
     res.status(201).json(activity);
