@@ -1,12 +1,6 @@
-const mongoose = require("mongoose");
-require("dotenv").config();
+const { askAI } = require('./services/openAIService');
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log("MongoDB connected successfully!");
-    process.exit(0); // exit after success
-  })
-  .catch((err) => {
-    console.error("MongoDB connection error:", err);
-    process.exit(1);
-  });
+(async () => {
+  const response = await askAI("Explain photosynthesis simply and give 2 tips to remember it.");
+  console.log(response);
+})();
