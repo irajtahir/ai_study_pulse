@@ -89,7 +89,28 @@ exports.getStats = async (req, res) => {
       difficultyAnalysis[diff] = (difficultyAnalysis[diff] || 0) + 1;
     });
 
-    res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis });
+    const Message = require('../models/Message'); // add at top
+
+// Fetch AI messages
+const aiMessages = await Message.find({ user: req.user._id, role: 'ai' });
+
+// Combine AI messages with activity insights
+const allInsights = [
+  ...activities.flatMap(a => a.insights || []),
+  ...aiMessages.map(m => m.text)
+];
+
+// Create aggregated insights count
+const insightsMap = {};
+allInsights.forEach(s => {
+  insightsMap[s] = (insightsMap[s] || 0) + 1;
+});
+const aggregatedInsights = Object.entries(insightsMap)
+  .map(([text, count]) => ({ text, count }))
+  .sort((a,b) => b.count - a.count)
+  .slice(0,6);
+
+    res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis,aggregatedInsights });
 
   } catch (err) {
     console.error(err);

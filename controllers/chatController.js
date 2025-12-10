@@ -1,20 +1,34 @@
-// backend/controllers/chatController.js
-const { analyzeActivity } = require('../services/aiService');
+const Message = require('../models/Message');
+const { analyzeActivity } = require('../services/aiService'); // your stub
 
-/**
- * POST /api/chat
- * Receives a message from the user and returns AI response
- */
-exports.chat = async (req, res) => {
+// Get all messages of current user
+exports.getMessages = async (req, res) => {
   try {
-    const { message, subject, topic } = req.body;
+    const messages = await Message.find({ user: req.user._id }).sort({ createdAt: 1 });
+    res.json(messages);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
-    if (!message) return res.status(400).json({ message: 'Message is required' });
+// Send a message to AI and store both messages
+exports.sendMessage = async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) return res.status(400).json({ message: 'Message is required' });
 
-    // Use your AI service to generate response
-    const { insights } = await analyzeActivity(message, subject || '', topic || '');
+    // Store user message
+    const userMessage = await Message.create({ user: req.user._id, role: 'user', text });
 
-    res.json({ response: insights.join(' ') }); // return a single string
+    // Generate AI response (using your stub for now)
+    const { insights } = await analyzeActivity(text);
+    const aiText = insights.join(' ') || "I have no suggestions for this.";
+
+    // Store AI message
+    const aiMessage = await Message.create({ user: req.user._id, role: 'ai', text: aiText });
+
+    res.json({ userMessage, aiMessage });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
