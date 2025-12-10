@@ -16,7 +16,7 @@ exports.getUserActivities = async (req, res) => {
 };
 
 /**
- * Create a new activity with optional AI analysis
+ * Create a new activity with AI analysis
  */
 exports.createActivity = async (req, res) => {
   try {
@@ -53,33 +53,33 @@ exports.getStats = async (req, res) => {
       return res.json({
         totalStudyHours: 0,
         completionRate: 0,
-        weeklyGraph: [0,0,0,0,0,0,0],
+        weeklyGraph: [0, 0, 0, 0, 0, 0, 0],
         difficultyAnalysis: { easy: 0, medium: 0, hard: 0 }
       });
     }
 
-    // Total study hours
-    const totalStudyHours = Math.round((activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0) / 60) * 10) / 10;
+    // Total study hours (rounded to 1 decimal)
+    const totalStudyHours = Math.round(
+      (activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0) / 60) * 10
+    ) / 10;
 
-    // Completion rate: % of activities that have duration > 0
+    // Completion rate: % of activities with duration > 0
     const completionRate = Math.round(
       (activities.filter(a => a.durationMinutes > 0).length / activities.length) * 100
     );
 
-    // Weekly graph: last 7 days
+    // Weekly graph: last 7 days in hours
     const today = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
       d.setDate(today.getDate() - (6 - i));
-      return d.toISOString().slice(0,10); // YYYY-MM-DD
+      return d.toISOString().slice(0, 10);
     });
 
     const weeklyGraph = last7Days.map(day => {
-      const dayActivities = activities.filter(a =>
-        new Date(a.createdAt).toISOString().slice(0,10) === day
-      );
-      const sum = dayActivities.reduce((s,a) => s + (a.durationMinutes || 0), 0);
-      return sum / 60; // convert minutes to hours
+      const dayActivities = activities.filter(a => new Date(a.createdAt).toISOString().slice(0, 10) === day);
+      const sumMinutes = dayActivities.reduce((s, a) => s + (a.durationMinutes || 0), 0);
+      return Math.round((sumMinutes / 60) * 10) / 10; // convert minutes to hours, 1 decimal
     });
 
     // Difficulty analysis
