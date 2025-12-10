@@ -8,9 +8,8 @@ const ActivitySchema = new mongoose.Schema({
   durationMinutes: { type: Number, default: 0 },
   notes: { type: String },
   accuracy: { type: Number, default: null },
-  // NEW: AI analysis fields
-  insights: [{ type: String }], // extracted insights / suggestions
-  difficulty: { type: String, enum: ['easy','medium','hard','unknown'], default: 'unknown' },
+  difficulty: { type: String, default: 'medium' }, // easy, medium, hard
+  insights: [{ type: String }], // AI-generated suggestions
   createdAt: { type: Date, default: Date.now }
 });
 
