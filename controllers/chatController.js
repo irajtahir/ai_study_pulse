@@ -1,7 +1,7 @@
 const Message = require('../models/Message');
-const { analyzeActivity } = require('../services/aiService'); // your stub
+const { askAI } = require('../services/openAIService');
 
-// Get all messages of current user
+// Get all messages
 exports.getMessages = async (req, res) => {
   try {
     const messages = await Message.find({ user: req.user._id }).sort({ createdAt: 1 });
@@ -12,7 +12,7 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-// Send a message to AI and store both messages
+// Send message to AI
 exports.sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
@@ -21,11 +21,10 @@ exports.sendMessage = async (req, res) => {
     // Store user message
     const userMessage = await Message.create({ user: req.user._id, role: 'user', text });
 
-    // Generate AI response (using your stub for now)
-    const { insights } = await analyzeActivity(text);
-    const aiText = insights.join(' ') || "I have no suggestions for this.";
+    // Ask OpenAI
+    const aiText = await askAI(text);
 
-    // Store AI message
+    // Store AI response
     const aiMessage = await Message.create({ user: req.user._id, role: 'ai', text: aiText });
 
     res.json({ userMessage, aiMessage });
