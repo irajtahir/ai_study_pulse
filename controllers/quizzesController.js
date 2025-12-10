@@ -6,11 +6,10 @@ const Quiz = require('../models/Quiz');
  */
 exports.getWeakTopics = async (req, res) => {
   try {
-    // find quizzes for this user
     const quizzes = await Quiz.find({ user: req.user._id }).lean();
 
-    // If quizzes include scores, find topics with low avg score
-    const topicMap = {}; // topic -> { totalScore, count }
+    // Map topic -> average score
+    const topicMap = {};
     quizzes.forEach(q => {
       if (q.score === null || q.score === undefined) return;
       const topic = q.topic || 'General';
@@ -25,15 +24,13 @@ exports.getWeakTopics = async (req, res) => {
       count: v.count
     }));
 
-    // Sort ascending by avg so weakest first; if no scores, suggest recent quiz topics
     topicAverages.sort((a,b) => (a.avg ?? 100) - (b.avg ?? 100));
 
     const weakTopics = topicAverages.slice(0, 5).map(t => t.topic);
 
-    // suggestions simple heuristic
     const suggestions = weakTopics.map(t => `Review ${t} with focused practice and short quizzes.`);
 
-    // fallback: if no quiz scores, return recent quiz topics or empty
+    // Fallback if no quizzes or no scores
     if (weakTopics.length === 0) {
       const recentTopics = quizzes.slice(-5).map(q => q.topic).filter(Boolean);
       return res.json({ weakTopics: recentTopics, suggestions: recentTopics.map(t => `Practice ${t}`) });

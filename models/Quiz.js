@@ -5,12 +5,12 @@ const QuizSchema = new mongoose.Schema({
   topic: { type: String, required: true },
   questions: [
     {
-      q: String,
-      options: [String],
-      answer: String
+      question: { type: String, required: true },
+      options: [{ type: String }],
+      answer: { type: String }
     }
   ],
-  score: { type: Number, default: null },
+  score: { type: Number, default: null }, // user score
   createdAt: { type: Date, default: Date.now }
 });
 
