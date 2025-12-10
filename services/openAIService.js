@@ -1,33 +1,19 @@
+// services/openAIService.js
 const { OpenAI } = require("openai");
-const Message = require("../models/Message"); // for fetching previous messages
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-const askAI = async (userId, userMessage) => {
+const askAI = async (userMessage) => {
   try {
-    // Fetch last 10 messages from DB for this user
-    const history = await Message.find({ user: userId })
-      .sort({ createdAt: 1 })
-      .limit(20); // or adjust as needed
-
-    // Convert DB messages into OpenAI format
-    const messages = history.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.text
-    }));
-
-    // Add the new user message
-    messages.push({ role: "user", content: userMessage });
-
-    // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages,
+      model: "gpt-4o-mini", // or gpt-4 if available
+      messages: [{ role: "user", content: userMessage }],
     });
 
-    return completion.choices[0].message.content;
+    // Make sure it always returns a string
+    return completion?.choices?.[0]?.message?.content || "Sorry, I couldn't process your question right now.";
   } catch (err) {
     console.error("OpenAI error:", err);
     return "Sorry, I couldn't process your question right now.";
