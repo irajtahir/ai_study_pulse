@@ -1,6 +1,7 @@
 // backend/controllers/activitiesController.js
 const Activity = require('../models/Activity');
-const { analyzeActivity } = require('../services/aiService');
+const Message = require('../models/Message');
+const { askAI } = require('../services/openAIService');
 
 /**
  * Get all activities of current user
@@ -22,9 +23,25 @@ exports.createActivity = async (req, res) => {
   try {
     const { subject, topic, durationMinutes, notes } = req.body;
 
-    // Run AI analysis
-    const { insights, difficulty } = await analyzeActivity(notes, subject, topic);
+    // Combine activity data to send to AI for insights
+    const prompt = `
+      Subject: ${subject}
+      Topic: ${topic}
+      Notes: ${notes || "No notes provided."}
+      Provide 3-5 actionable study insights and suggest difficulty level (easy, medium, hard).
+    `;
 
+    // Ask OpenAI
+    const aiResponse = await askAI(prompt);
+
+    // Split AI response into insights and determine difficulty
+    // You can customize parsing here depending on how you want to store it
+    const insights = aiResponse.split(/\n|;/).filter(line => line.trim() !== '');
+    let difficulty = 'medium';
+    if (/easy/i.test(aiResponse)) difficulty = 'easy';
+    else if (/hard|difficult|challenging/i.test(aiResponse)) difficulty = 'hard';
+
+    // Store activity
     const activity = await Activity.create({
       user: req.user._id,
       subject,
@@ -54,7 +71,8 @@ exports.getStats = async (req, res) => {
         totalStudyHours: 0,
         completionRate: 0,
         weeklyGraph: [0, 0, 0, 0, 0, 0, 0],
-        difficultyAnalysis: { easy: 0, medium: 0, hard: 0 }
+        difficultyAnalysis: { easy: 0, medium: 0, hard: 0 },
+        aggregatedInsights: []
       });
     }
 
@@ -77,9 +95,11 @@ exports.getStats = async (req, res) => {
     });
 
     const weeklyGraph = last7Days.map(day => {
-      const dayActivities = activities.filter(a => new Date(a.createdAt).toISOString().slice(0, 10) === day);
+      const dayActivities = activities.filter(a =>
+        new Date(a.createdAt).toISOString().slice(0, 10) === day
+      );
       const sumMinutes = dayActivities.reduce((s, a) => s + (a.durationMinutes || 0), 0);
-      return Math.round((sumMinutes / 60) * 10) / 10; // convert minutes to hours, 1 decimal
+      return Math.round((sumMinutes / 60) * 10) / 10; // convert minutes to hours
     });
 
     // Difficulty analysis
@@ -89,28 +109,27 @@ exports.getStats = async (req, res) => {
       difficultyAnalysis[diff] = (difficultyAnalysis[diff] || 0) + 1;
     });
 
-    const Message = require('../models/Message'); // add at top
+    // Fetch AI messages from chat (to include in aggregated insights)
+    const aiMessages = await Message.find({ user: req.user._id, role: 'ai' });
 
-// Fetch AI messages
-const aiMessages = await Message.find({ user: req.user._id, role: 'ai' });
+    // Combine activity insights and AI messages
+    const allInsights = [
+      ...activities.flatMap(a => a.insights || []),
+      ...aiMessages.map(m => m.text)
+    ];
 
-// Combine AI messages with activity insights
-const allInsights = [
-  ...activities.flatMap(a => a.insights || []),
-  ...aiMessages.map(m => m.text)
-];
+    // Aggregate insights by count
+    const insightsMap = {};
+    allInsights.forEach(s => {
+      insightsMap[s] = (insightsMap[s] || 0) + 1;
+    });
 
-// Create aggregated insights count
-const insightsMap = {};
-allInsights.forEach(s => {
-  insightsMap[s] = (insightsMap[s] || 0) + 1;
-});
-const aggregatedInsights = Object.entries(insightsMap)
-  .map(([text, count]) => ({ text, count }))
-  .sort((a,b) => b.count - a.count)
-  .slice(0,6);
+    const aggregatedInsights = Object.entries(insightsMap)
+      .map(([text, count]) => ({ text, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6); // top 6 insights
 
-    res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis,aggregatedInsights });
+    res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis, aggregatedInsights });
 
   } catch (err) {
     console.error(err);

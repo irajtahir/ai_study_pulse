@@ -2,7 +2,7 @@ const Message = require('../models/Message');
 const { askAI } = require('../services/openAIService');
 
 // Get all messages
-exports.getMessages = async (req, res) => {
+const getMessages = async (req, res) => {
   try {
     const messages = await Message.find({ user: req.user._id }).sort({ createdAt: 1 });
     res.json(messages);
@@ -13,7 +13,7 @@ exports.getMessages = async (req, res) => {
 };
 
 // Send message to AI
-exports.sendMessage = async (req, res) => {
+const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
     if (!text) return res.status(400).json({ message: 'Message is required' });
@@ -33,3 +33,5 @@ exports.sendMessage = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+module.exports = { getMessages, sendMessage };
