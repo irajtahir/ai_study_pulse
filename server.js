@@ -6,6 +6,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const activitiesRoutes = require('./routes/activities');
 const quizzesRoutes = require('./routes/quizzes');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 
@@ -28,6 +29,8 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/activities', activitiesRoutes);
 app.use('/api/quizzes', quizzesRoutes);
+app.use('/api/chat', chatRoutes);
+
 
 
 // Root endpoint
