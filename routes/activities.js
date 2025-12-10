@@ -1,12 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/authMiddleware'); // must export a function
-const { createActivity, getUserActivities } = require('../controllers/activitiesController');
+const auth = require('../middleware/authMiddleware');
+const { createActivity, getUserActivities, getStats } = require('../controllers/activitiesController');
 
-// GET /activities
 router.get('/', auth, getUserActivities);
-
-// POST /activities
+router.get('/stats', auth, getStats); // <-- new route
 router.post('/', auth, createActivity);
 
 module.exports = router;
