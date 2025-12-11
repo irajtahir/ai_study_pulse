@@ -1,4 +1,4 @@
-// services/openAIService.js
+require("dotenv").config();
 const { OpenAI } = require("openai");
 
 const openai = new OpenAI({
@@ -8,12 +8,12 @@ const openai = new OpenAI({
 const askAI = async (userMessage) => {
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // or gpt-4 if available
+      model: "gpt-4o-mini",
       messages: [{ role: "user", content: userMessage }],
     });
 
-    // Make sure it always returns a string
-    return completion?.choices?.[0]?.message?.content || "Sorry, I couldn't process your question right now.";
+    return completion?.choices?.[0]?.message?.content || 
+      "Sorry, I couldn't process your question right now.";
   } catch (err) {
     console.error("OpenAI error:", err);
     return "Sorry, I couldn't process your question right now.";
