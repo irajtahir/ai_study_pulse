@@ -1,5 +1,5 @@
 const Message = require("../models/Message");
-const askHF = require("../services/aiService"); // updated to HF service
+const askHF = require("../services/aiService"); // updated HF service
 
 // Fetch all messages of logged-in user
 const getMessages = async (req, res) => {

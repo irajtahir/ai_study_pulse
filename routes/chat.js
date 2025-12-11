@@ -3,7 +3,6 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const chatController = require("../controllers/chatController");
 
-// Check if controller functions exist
 if (!chatController.getMessages || !chatController.sendMessage) {
   throw new Error("ChatController functions missing!");
 }

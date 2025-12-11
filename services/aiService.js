@@ -1,14 +1,17 @@
 const axios = require("axios");
 
 const HF_API_KEY = process.env.HF_API_KEY;
+const HF_MODEL = process.env.HF_MODEL || "gpt2"; // default free HF model
 
 async function askHF(prompt) {
   try {
     const response = await axios.post(
-      "https://router.huggingface.co/api/chat/completions", // <-- updated endpoint
+      "https://api-inference.huggingface.co/models/" + HF_MODEL,
       {
-        model: "gpt2", // or any other HF model you want
-        messages: [{ role: "user", content: prompt }],
+        inputs: prompt,
+        parameters: {
+          max_new_tokens: 300
+        }
       },
       {
         headers: {
@@ -18,8 +21,8 @@ async function askHF(prompt) {
       }
     );
 
-    // For chat models, check how HF returns the text
-    return response.data?.choices?.[0]?.message?.content || "HF AI error";
+    // HF returns text under response.data?.generated_text
+    return response.data?.generated_text || "HF AI error";
   } catch (err) {
     console.error("HF API ERROR:", err.response?.data || err.message);
     return "HF AI error. Please try again later.";
