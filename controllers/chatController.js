@@ -1,5 +1,5 @@
 const Message = require("../models/Message");
-const askAI = require("../services/aiService"); // updated to HF service
+const askHF = require("../services/aiService"); // updated to HF service
 
 // Fetch all messages of logged-in user
 const getMessages = async (req, res) => {
@@ -28,7 +28,7 @@ const sendMessage = async (req, res) => {
     });
 
     // Get AI response
-    const aiText = await askAI(text);
+    const aiText = await askHF(text);
 
     // Save AI message
     const aiMessage = await Message.create({
