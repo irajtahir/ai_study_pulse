@@ -1,36 +1,49 @@
-const Message = require('../models/Message');
-const { askAI } = require('../services/openAIService');
+// controllers/chatController.js
+const Message = require("../models/Message");
+const askAI = require("../services/openAIService");  // import DEFAULT export
 
-// Get all messages
+// Fetch all messages of logged-in user
 const getMessages = async (req, res) => {
   try {
-    const messages = await Message.find({ user: req.user._id }).sort({ createdAt: 1 });
+    const messages = await Message.find({ user: req.user._id }).sort({
+      createdAt: 1,
+    });
     res.json(messages);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Fetch Messages Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// Send message to AI
+// Send user message + get AI response
 const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text) return res.status(400).json({ message: 'Message is required' });
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Message is required" });
+    }
 
-    // Store user message
-    const userMessage = await Message.create({ user: req.user._id, role: 'user', text });
+    // Save user message
+    const userMessage = await Message.create({
+      user: req.user._id,
+      role: "user",
+      text,
+    });
 
-    // Ask OpenAI
+    // Get AI response
     const aiText = await askAI(text);
 
-    // Store AI response
-    const aiMessage = await Message.create({ user: req.user._id, role: 'ai', text: aiText });
+    // Save AI message
+    const aiMessage = await Message.create({
+      user: req.user._id,
+      role: "ai",
+      text: aiText,
+    });
 
-    res.json({ userMessage, aiMessage });
+    return res.json({ userMessage, aiMessage });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Chat Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
