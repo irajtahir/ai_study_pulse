@@ -1,18 +1,21 @@
 require("dotenv").config();
 const { OpenAI } = require("openai");
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-const askAI = async (userMessage) => {
+const askAI = async (prompt) => {
   try {
-    const response = await openai.responses.create({
+    const response = await client.responses.create({
       model: "gpt-4o-mini",
-      input: userMessage
+      input: prompt
     });
 
-    return response?.output_text || "Sorry, I couldn't process your question right now.";
+    const text = response.output_text;
+    return text || "AI could not generate a response.";
   } catch (err) {
-    console.error("OpenAI error:", err.response?.data || err);
+    console.error("OPENAI ERROR:", err.response?.data || err.message || err);
     return "Sorry, I couldn't process your question right now.";
   }
 };
