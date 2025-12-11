@@ -1,33 +1,29 @@
 const axios = require("axios");
 
 const HF_API_KEY = process.env.HF_API_KEY;
-const HF_MODEL = "gpt2"; // You can change to any free Hugging Face text-generation model
 
-if (!HF_API_KEY) {
-  console.warn("HF_API_KEY is missing in .env!");
-}
-
-async function askAI(prompt) {
+async function askHF(prompt) {
   try {
     const response = await axios.post(
-      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
-      { inputs: prompt },
+      "https://router.huggingface.co/api/chat/completions", // <-- updated endpoint
       {
-        headers: { Authorization: `Bearer ${HF_API_KEY}` },
-        timeout: 15000, // 15s timeout
+        model: "gpt2", // or any other HF model you want
+        messages: [{ role: "user", content: prompt }],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json",
+        },
       }
     );
 
-    // HF API returns an array of objects with generated_text
-    if (Array.isArray(response.data) && response.data[0].generated_text) {
-      return response.data[0].generated_text.trim();
-    }
-
-    return "Sorry, I couldn't process your question right now.";
+    // For chat models, check how HF returns the text
+    return response.data?.choices?.[0]?.message?.content || "HF AI error";
   } catch (err) {
     console.error("HF API ERROR:", err.response?.data || err.message);
-    return "Sorry, I couldn't process your question right now.";
+    return "HF AI error. Please try again later.";
   }
 }
 
-module.exports = askAI;
+module.exports = askHF;
