@@ -1,7 +1,7 @@
 // backend/controllers/activitiesController.js
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
-const { askAI } = require('../services/openAIService');
+const { askAI } = require('../services/aiService');
 
 /**
  * Get all activities of current user
