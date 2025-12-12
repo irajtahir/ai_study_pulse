@@ -67,6 +67,24 @@ exports.createActivity = async (req, res) => {
   }
 };
 
+exports.deleteActivity = async (req, res) => {
+  try {
+    const result = await Activity.findOneAndDelete({
+      _id: req.params.id,
+      user: req.user._id
+    });
+
+    if (!result) {
+      return res.status(404).json({ message: "Activity not found" });
+    }
+
+    res.json({ message: "Activity deleted successfully" });
+  } catch (err) {
+    console.error("Delete error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 /**
  * Get user stats for dashboard
  */
