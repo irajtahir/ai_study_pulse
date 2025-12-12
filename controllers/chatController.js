@@ -20,21 +20,23 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Message is required" });
     }
 
-    // Save user message
+    // Save user message as type 'chat'
     const userMessage = await Message.create({
       user: req.user._id,
       role: "user",
       text,
+      type: "chat"
     });
 
     // Get AI response
     const aiText = await askHF(text);
 
-    // Save AI message
+    // Save AI message as type 'chat'
     const aiMessage = await Message.create({
       user: req.user._id,
       role: "ai",
       text: aiText,
+      type: "chat"
     });
 
     return res.json({ userMessage, aiMessage });

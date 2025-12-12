@@ -1,4 +1,3 @@
-// backend/controllers/activitiesController.js
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
 const askHF = require('../services/aiService');
@@ -31,11 +30,10 @@ exports.createActivity = async (req, res) => {
       Provide 3-5 actionable study insights and suggest difficulty level (easy, medium, hard).
     `;
 
-    // Ask OpenAI
+    // Ask AI
     const aiResponse = await askHF(prompt);
 
     // Split AI response into insights and determine difficulty
-    // You can customize parsing here depending on how you want to store it
     const insights = aiResponse.split(/\n|;/).filter(line => line.trim() !== '');
     let difficulty = 'medium';
     if (/easy/i.test(aiResponse)) difficulty = 'easy';
@@ -51,6 +49,16 @@ exports.createActivity = async (req, res) => {
       difficulty,
       insights
     });
+
+    // Save AI insights as messages of type 'activity'
+    for (const insight of insights) {
+      await Message.create({
+        user: req.user._id,
+        role: 'ai',
+        text: insight,
+        type: 'activity' // important! mark as activity
+      });
+    }
 
     res.status(201).json(activity);
   } catch (err) {
@@ -81,12 +89,12 @@ exports.getStats = async (req, res) => {
       (activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0) / 60) * 10
     ) / 10;
 
-    // Completion rate: % of activities with duration > 0
+    // Completion rate
     const completionRate = Math.round(
       (activities.filter(a => a.durationMinutes > 0).length / activities.length) * 100
     );
 
-    // Weekly graph: last 7 days in hours
+    // Weekly graph
     const today = new Date();
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(today);
@@ -99,7 +107,7 @@ exports.getStats = async (req, res) => {
         new Date(a.createdAt).toISOString().slice(0, 10) === day
       );
       const sumMinutes = dayActivities.reduce((s, a) => s + (a.durationMinutes || 0), 0);
-      return Math.round((sumMinutes / 60) * 10) / 10; // convert minutes to hours
+      return Math.round((sumMinutes / 60) * 10) / 10;
     });
 
     // Difficulty analysis
@@ -109,8 +117,12 @@ exports.getStats = async (req, res) => {
       difficultyAnalysis[diff] = (difficultyAnalysis[diff] || 0) + 1;
     });
 
-    // Fetch AI messages from chat (to include in aggregated insights)
-    const aiMessages = await Message.find({ user: req.user._id, role: 'ai' });
+    // Fetch only activity-type AI messages
+    const aiMessages = await Message.find({
+      user: req.user._id,
+      role: 'ai',
+      type: 'activity' // only include activity insights
+    });
 
     // Combine activity insights and AI messages
     const allInsights = [
@@ -118,7 +130,7 @@ exports.getStats = async (req, res) => {
       ...aiMessages.map(m => m.text)
     ];
 
-    // Aggregate insights by count
+    // Aggregate insights
     const insightsMap = {};
     allInsights.forEach(s => {
       insightsMap[s] = (insightsMap[s] || 0) + 1;
@@ -127,7 +139,7 @@ exports.getStats = async (req, res) => {
     const aggregatedInsights = Object.entries(insightsMap)
       .map(([text, count]) => ({ text, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 6); // top 6 insights
+      .slice(0, 6);
 
     res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis, aggregatedInsights });
 
