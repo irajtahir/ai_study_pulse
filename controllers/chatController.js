@@ -7,7 +7,10 @@ const getMessages = async (req, res) => {
   try {
     const messages = await Message.find({
       user: req.user._id,
-      type: "chat", // Only real-time chat messages
+      $or: [
+        { type: "chat" },       // new messages
+        { type: { $exists: false } } // old messages without type
+      ]
     }).sort({ createdAt: 1 });
 
     res.json(messages);
