@@ -20,7 +20,7 @@ exports.getUserActivities = async (req, res) => {
 /**
  * Create a new activity with AI analysis
  */
- exports.createActivity = async (req, res) => {
+exports.createActivity = async (req, res) => {
   try {
     const { subject, topic, durationMinutes, notes } = req.body;
 
@@ -41,7 +41,7 @@ exports.getUserActivities = async (req, res) => {
     if (/easy/i.test(aiResponse)) difficulty = 'easy';
     else if (/hard|difficult|challenging/i.test(aiResponse)) difficulty = 'hard';
 
-    // Combine all insights into a single string
+    // Combine all insights into a single string for AIInsight
     const combinedInsights = insightsArray.join('\n');
 
     // Store activity
@@ -49,10 +49,10 @@ exports.getUserActivities = async (req, res) => {
       user: req.user._id,
       subject,
       topic,
-      durationMinutes: durationMinutes || 0,
+      durationMinutes: parseFloat(durationMinutes) || 0, // ensure number
       notes: notes || '',
       difficulty,
-      insights: insightsArray // keep as array if you want for frontend display
+      insights: insightsArray // array for frontend display if needed
     });
 
     // Save AI insights as a single AIInsight document
@@ -68,7 +68,6 @@ exports.getUserActivities = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
 
 exports.deleteActivity = async (req, res) => {
   try {
@@ -99,7 +98,7 @@ exports.getStats = async (req, res) => {
       return res.json({
         totalStudyHours: 0,
         completionRate: 0,
-        weeklyGraph: [0, 0, 0, 0, 0, 0, 0],
+        weeklyGraph: Array(7).fill(0),
         difficultyAnalysis: { easy: 0, medium: 0, hard: 0 },
         aggregatedInsights: []
       });
@@ -107,12 +106,12 @@ exports.getStats = async (req, res) => {
 
     // Total study hours (rounded to 1 decimal)
     const totalStudyHours = Math.round(
-      (activities.reduce((sum, a) => sum + (a.durationMinutes || 0), 0) / 60) * 10
+      (activities.reduce((sum, a) => sum + (parseFloat(a.durationMinutes) || 0), 0) / 60) * 10
     ) / 10;
 
     // Completion rate
     const completionRate = Math.round(
-      (activities.filter(a => a.durationMinutes > 0).length / activities.length) * 100
+      (activities.filter(a => (parseFloat(a.durationMinutes) || 0) > 0).length / activities.length) * 100
     );
 
     // Weekly graph
@@ -127,7 +126,7 @@ exports.getStats = async (req, res) => {
       const dayActivities = activities.filter(a =>
         new Date(a.createdAt).toISOString().slice(0, 10) === day
       );
-      const sumMinutes = dayActivities.reduce((s, a) => s + (a.durationMinutes || 0), 0);
+      const sumMinutes = dayActivities.reduce((s, a) => s + (parseFloat(a.durationMinutes) || 0), 0);
       return Math.round((sumMinutes / 60) * 10) / 10;
     });
 
