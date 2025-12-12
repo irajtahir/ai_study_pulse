@@ -1,10 +1,13 @@
 const Message = require("../models/Message");
 const askHF = require("../services/aiService"); // updated HF service
 
-// Fetch all messages of logged-in user
+// Fetch all chat messages of logged-in user (exclude activity insights)
 const getMessages = async (req, res) => {
   try {
-    const messages = await Message.find({ user: req.user._id }).sort({ createdAt: 1 });
+    const messages = await Message.find({
+      user: req.user._id,
+      type: "chat" // <-- only chat messages
+    }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (err) {
     console.error("Fetch Messages Error:", err);
