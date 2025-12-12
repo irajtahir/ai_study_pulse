@@ -33,8 +33,12 @@ exports.getWeakTopics = async (req, res) => {
 /**
  * 2) Generate a quiz using AI (with fallback)
  */
+/**
+ * 2) Generate a quiz using AI (with fallback & cleaned options)
+ */
 exports.generateQuiz = async (req, res) => {
   const { topic, numQuestions = 5 } = req.body;
+
   if (!topic || !topic.trim())
     return res.status(400).json({ message: "Topic required" });
 
@@ -57,22 +61,37 @@ Return STRICTLY in the following JSON format:
 
 Rules:
 - Each question must be unique.
-- Options must be meaningful.
+- Options must be meaningful and complete sentences or numbers.
 - 'answer' must exactly match one of the options.
 - Return ONLY JSON.
 - Do NOT include explanations or extra text.
 `;
 
     const aiResponse = await askHF(prompt);
+
     let parsed = null;
 
     try {
+      // Extract JSON
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No valid JSON found");
 
       parsed = JSON.parse(jsonMatch[0]);
+
       if (!parsed.questions || !Array.isArray(parsed.questions))
         throw new Error("Invalid AI JSON structure");
+
+      // Clean options: trim, remove empty strings
+      parsed.questions = parsed.questions.map((q, idx) => {
+        const questionText = q.question?.trim() || `Sample Q${idx + 1}: ${topic}`;
+        let options = Array.isArray(q.options) ? q.options.map((o) => o?.trim()).filter(Boolean) : [];
+        if (options.length !== 4) {
+          // fallback if AI gave less than 4 options
+          options = ["Option A", "Option B", "Option C", "Option D"];
+        }
+        const answer = q.answer?.trim() && options.includes(q.answer?.trim()) ? q.answer.trim() : options[0];
+        return { question: questionText, options, answer };
+      });
     } catch (err) {
       console.log(
         "AI JSON parse/failure → using fallback:",
@@ -80,6 +99,7 @@ Rules:
         "Raw AI:",
         aiResponse
       );
+
       parsed = {
         questions: Array(n)
           .fill(null)
@@ -104,6 +124,7 @@ Rules:
     res.status(500).json({ message: "Failed to generate quiz" });
   }
 };
+
 
 /**
  * 3) List all quizzes of current user
