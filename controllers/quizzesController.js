@@ -1,10 +1,10 @@
 // backend/controllers/quizzesController.js
 
 const Quiz = require('../models/Quiz');
-const askHF = require("../services/aiService");
+const askHF = require('../services/aiService');
 
 /**
- * 1) Find user's weak topics based on quiz scores
+ * 1) Get user's weak topics based on past quizzes
  */
 exports.getWeakTopics = async (req, res) => {
   try {
@@ -17,31 +17,27 @@ exports.getWeakTopics = async (req, res) => {
       const topic = q.topic || 'General';
 
       if (!topicMap[topic]) topicMap[topic] = { total: 0, count: 0 };
-
       topicMap[topic].total += q.score;
       topicMap[topic].count++;
     });
 
     const sorted = Object.entries(topicMap)
-      .map(([topic, data]) => ({
-        topic,
-        avg: data.total / data.count
-      }))
-      .sort((a, b) => a.avg - b.avg)
+      .map(([topic, data]) => ({ topic, avg: data.total / data.count }))
+      .sort((a, b) => a.avg - b.avg) // weakest first
       .slice(0, 5)
       .map(x => x.topic);
 
     res.json({ weakTopics: sorted, suggestions: sorted });
 
   } catch (err) {
-    console.error(err);
+    console.error("getWeakTopics error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 
 /**
- * 2) Generate a REAL AI quiz
+ * 2) Generate a quiz using AI (with fallback)
  * Accepts: { topic, numQuestions }
  */
 exports.generateQuiz = async (req, res) => {
@@ -55,7 +51,7 @@ exports.generateQuiz = async (req, res) => {
 
   try {
     const prompt = `
-Generate ${n} multiple-choice questions on the topic "${topic}".
+Generate ${n} unique multiple-choice questions on the topic "${topic}".
 Return STRICTLY in the following JSON format:
 
 {
@@ -69,28 +65,38 @@ Return STRICTLY in the following JSON format:
 }
 
 Rules:
-- Each question must be unique.
 - Options must be meaningful.
 - 'answer' must exactly match one of the options.
 - Do NOT include explanations.
-    `;
-
-    const aiResponse = await askHF(prompt);
+`;
 
     let parsed;
     try {
-      parsed = JSON.parse(aiResponse);
+      const aiResponse = await askHF(prompt);
+
+      // Extract JSON only
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
+      else throw new Error("No valid JSON in AI response");
+
+      if (!parsed.questions || !Array.isArray(parsed.questions)) {
+        throw new Error("Invalid AI JSON structure");
+      }
+
     } catch (err) {
-      console.log("AI JSON parse error → Raw:", aiResponse);
-      return res.status(500).json({
-        message: "AI failed to generate proper JSON quiz format"
-      });
+      console.log("AI JSON parse/failure → using fallback:", err.message);
+
+      // fallback: simple dummy MCQs
+      parsed = {
+        questions: Array(n).fill(null).map((_, idx) => ({
+          question: `Sample Q${idx + 1}: What is the definition of ${topic}?`,
+          options: ["Option A", "Option B", "Option C", "Option D"],
+          answer: "Option A"
+        }))
+      };
     }
 
-    if (!parsed.questions || !Array.isArray(parsed.questions)) {
-      return res.status(500).json({ message: "Invalid AI response format" });
-    }
-
+    // Save quiz to DB
     const quiz = await Quiz.create({
       user: req.user._id,
       topic,
@@ -101,60 +107,59 @@ Rules:
     res.status(201).json(quiz);
 
   } catch (err) {
-    console.error(err);
+    console.error("generateQuiz error:", err);
     res.status(500).json({ message: "Failed to generate quiz" });
   }
 };
 
 
 /**
- * 3) List all quizzes of current user
+ * 3) List all quizzes of the current user
  */
 exports.listQuizzes = async (req, res) => {
   try {
     const quizzes = await Quiz.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(quizzes);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("listQuizzes error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
 /**
- * 4) Get quiz by ID (ensure belongs to user)
+ * 4) Get a single quiz by ID (ensure it belongs to the user)
  */
 exports.getQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
     if (String(quiz.user) !== String(req.user._id))
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: "Not authorized" });
 
     res.json(quiz);
   } catch (err) {
-    console.error(err);
-    if (err.kind === 'ObjectId')
-      return res.status(404).json({ message: 'Quiz not found' });
-
-    res.status(500).json({ message: 'Server error' });
+    console.error("getQuiz error:", err);
+    if (err.kind === "ObjectId") return res.status(404).json({ message: "Quiz not found" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 
 /**
- * 5) Submit quiz and calculate score
+ * 5) Submit quiz answers and calculate score
+ * Expects: { answers: [<selected option string>] }
  */
 exports.submitQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
     if (String(quiz.user) !== String(req.user._id))
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: "Not authorized" });
 
     const { answers } = req.body;
     if (!Array.isArray(answers))
-      return res.status(400).json({ message: 'Answers must be an array' });
+      return res.status(400).json({ message: "Answers must be an array" });
 
     let correctCount = 0;
     const correctIndices = [];
@@ -167,10 +172,7 @@ exports.submitQuiz = async (req, res) => {
       }
     });
 
-    quiz.score = quiz.questions.length
-      ? (correctCount / quiz.questions.length) * 100
-      : 0;
-
+    quiz.score = quiz.questions.length ? (correctCount / quiz.questions.length) * 100 : 0;
     await quiz.save();
 
     res.json({
@@ -181,10 +183,8 @@ exports.submitQuiz = async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
-    if (err.kind === 'ObjectId')
-      return res.status(404).json({ message: 'Quiz not found' });
-
-    res.status(500).json({ message: 'Server error' });
+    console.error("submitQuiz error:", err);
+    if (err.kind === "ObjectId") return res.status(404).json({ message: "Quiz not found" });
+    res.status(500).json({ message: "Server error" });
   }
 };
