@@ -1,6 +1,8 @@
+// controllers/activitiesController.js
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
 const askHF = require('../services/aiService');
+const AIInsight = require('../models/AIInsight'); // NEW
 
 /**
  * Get all activities of current user
@@ -33,7 +35,7 @@ exports.createActivity = async (req, res) => {
     // Ask AI
     const aiResponse = await askHF(prompt);
 
-    // Split AI response into insights and determine difficulty
+    // Split AI response into insights
     const insights = aiResponse.split(/\n|;/).filter(line => line.trim() !== '');
     let difficulty = 'medium';
     if (/easy/i.test(aiResponse)) difficulty = 'easy';
@@ -50,12 +52,12 @@ exports.createActivity = async (req, res) => {
       insights
     });
 
-    // Save AI insights as messages of type 'activity'
+    // Save AI insights to AIInsights collection
     for (const insight of insights) {
       await AIInsight.create({
         user: req.user._id,
         title: `${subject} - ${topic}`,
-        content: insight // important! mark as activity
+        content: insight
       });
     }
 
@@ -134,25 +136,13 @@ exports.getStats = async (req, res) => {
       difficultyAnalysis[diff] = (difficultyAnalysis[diff] || 0) + 1;
     });
 
-    // Fetch only activity-type AI messages
-    const aiMessages = await Message.find({
-      user: req.user._id,
-      role: 'ai',
-      type: 'activity' // only include activity insights
-    });
-
-    // Combine activity insights and AI messages
-    const aiInsights = await AIInsight.find({ user: req.user._id });
-    const allInsights = [
-     ...activities.flatMap(a => a.insights || []),
-    ...aiInsights.map(ins => ins.content)
-  ];
-
+    // Fetch AI insights from AIInsights collection
+    const aiInsights = await AIInsight.find({ user: req.user._id }).sort({ createdAt: -1 });
 
     // Aggregate insights
     const insightsMap = {};
-    allInsights.forEach(s => {
-      insightsMap[s] = (insightsMap[s] || 0) + 1;
+    aiInsights.forEach(i => {
+      insightsMap[i.content] = (insightsMap[i.content] || 0) + 1;
     });
 
     const aggregatedInsights = Object.entries(insightsMap)
