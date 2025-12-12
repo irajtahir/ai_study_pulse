@@ -1,12 +1,15 @@
 const Message = require("../models/Message");
-const askHF = require("../services/aiService"); // updated HF service
+const askHF = require("../services/aiService"); 
 
-// Fetch all chat messages of logged-in user (exclude activity insights)
+// Fetch all chat messages of logged-in user
 const getMessages = async (req, res) => {
   try {
     const messages = await Message.find({
       user: req.user._id,
-      type: "chat" // <-- only chat messages
+      $or: [
+        { type: "chat" },           // chat messages
+        { type: { $exists: false } } // legacy messages without type
+      ]
     }).sort({ createdAt: 1 });
     res.json(messages);
   } catch (err) {
@@ -19,11 +22,8 @@ const getMessages = async (req, res) => {
 const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
-    if (!text || !text.trim()) {
-      return res.status(400).json({ message: "Message is required" });
-    }
+    if (!text || !text.trim()) return res.status(400).json({ message: "Message is required" });
 
-    // Save user message as type 'chat'
     const userMessage = await Message.create({
       user: req.user._id,
       role: "user",
@@ -31,10 +31,8 @@ const sendMessage = async (req, res) => {
       type: "chat"
     });
 
-    // Get AI response
     const aiText = await askHF(text);
 
-    // Save AI message as type 'chat'
     const aiMessage = await Message.create({
       user: req.user._id,
       role: "ai",
