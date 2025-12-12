@@ -7,8 +7,8 @@ const askHF = require("../services/aiService");
 exports.getWeakTopics = async (req, res) => {
   try {
     const quizzes = await Quiz.find({ user: req.user._id }).lean();
-
     const topicMap = {};
+
     quizzes.forEach((q) => {
       if (q.score == null) return;
       const topic = q.topic || "General";
@@ -35,7 +35,6 @@ exports.getWeakTopics = async (req, res) => {
  */
 exports.generateQuiz = async (req, res) => {
   const { topic, numQuestions = 5 } = req.body;
-
   if (!topic || !topic.trim())
     return res.status(400).json({ message: "Topic required" });
 
@@ -65,7 +64,6 @@ Rules:
 `;
 
     const aiResponse = await askHF(prompt);
-
     let parsed = null;
 
     try {
@@ -73,7 +71,6 @@ Rules:
       if (!jsonMatch) throw new Error("No valid JSON found");
 
       parsed = JSON.parse(jsonMatch[0]);
-
       if (!parsed.questions || !Array.isArray(parsed.questions))
         throw new Error("Invalid AI JSON structure");
     } catch (err) {
@@ -83,8 +80,6 @@ Rules:
         "Raw AI:",
         aiResponse
       );
-
-      // fallback dummy MCQs
       parsed = {
         questions: Array(n)
           .fill(null)
@@ -142,7 +137,7 @@ exports.getQuiz = async (req, res) => {
 };
 
 /**
- * 5) Submit quiz and return user answers
+ * 5) Submit quiz
  */
 exports.submitQuiz = async (req, res) => {
   try {
@@ -156,14 +151,8 @@ exports.submitQuiz = async (req, res) => {
       return res.status(400).json({ message: "Answers must be an array" });
 
     let correctCount = 0;
-    const correctIndices = [];
-
     quiz.questions.forEach((q, idx) => {
-      const given = answers[idx];
-      if (given != null && q.answer === given) {
-        correctCount++;
-        correctIndices.push(idx);
-      }
+      if (answers[idx] != null && answers[idx] === q.answer) correctCount++;
     });
 
     quiz.score = quiz.questions.length
@@ -176,8 +165,7 @@ exports.submitQuiz = async (req, res) => {
       scorePercent: Math.round(quiz.score),
       scoreRaw: correctCount,
       total: quiz.questions.length,
-      correctIndices,
-      userAnswers: answers, // send back selected answers for highlighting
+      userAnswers: answers, // send user answers for frontend highlighting
     });
   } catch (err) {
     console.error(err);
