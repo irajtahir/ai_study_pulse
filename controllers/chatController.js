@@ -1,24 +1,17 @@
-// controllers/chatController.js
 const Message = require("../models/Message");
-const askHF = require("../services/aiService");
+const askHF = require("../services/aiService"); // HF AI service
 
-// Fetch all chat messages with optional date filter
+// Fetch all real-time chat messages of the logged-in user
 const getMessages = async (req, res) => {
   try {
-    const { date } = req.query; // optional filter
-    const query = {
+    const messages = await Message.find({
       user: req.user._id,
-      type: "chat",
-    };
-    if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
-      query.createdAt = { $gte: start, $lte: end };
-    }
+      $or: [
+        { type: "chat" },       // new messages
+        { type: { $exists: false } } // old messages without type
+      ]
+    }).sort({ createdAt: 1 });
 
-    const messages = await Message.find(query).sort({ createdAt: 1 });
     res.json(messages);
   } catch (err) {
     console.error("Fetch Messages Error:", err);
@@ -34,23 +27,23 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Message is required" });
     }
 
-    // Save user message
+    // Save user message as type 'chat'
     const userMessage = await Message.create({
       user: req.user._id,
       role: "user",
       text,
-      type: "chat",
+      type: "chat", // real-time chat
     });
 
-    // Get AI reply
+    // Get AI reply from Hugging Face
     const aiText = await askHF(text);
 
-    // Save AI reply
+    // Save AI message as type 'chat'
     const aiMessage = await Message.create({
       user: req.user._id,
       role: "ai",
       text: aiText,
-      type: "chat",
+      type: "chat", // real-time chat
     });
 
     return res.json({ userMessage, aiMessage });

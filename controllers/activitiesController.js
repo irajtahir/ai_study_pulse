@@ -1,4 +1,3 @@
-// controllers/activitiesController.js
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
 const askHF = require('../services/aiService');
