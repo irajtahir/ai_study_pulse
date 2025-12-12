@@ -20,7 +20,7 @@ exports.getUserActivities = async (req, res) => {
 /**
  * Create a new activity with AI analysis
  */
-exports.createActivity = async (req, res) => {
+ exports.createActivity = async (req, res) => {
   try {
     const { subject, topic, durationMinutes, notes } = req.body;
 
@@ -36,10 +36,13 @@ exports.createActivity = async (req, res) => {
     const aiResponse = await askHF(prompt);
 
     // Split AI response into insights
-    const insights = aiResponse.split(/\n|;/).filter(line => line.trim() !== '');
+    const insightsArray = aiResponse.split(/\n|;/).filter(line => line.trim() !== '');
     let difficulty = 'medium';
     if (/easy/i.test(aiResponse)) difficulty = 'easy';
     else if (/hard|difficult|challenging/i.test(aiResponse)) difficulty = 'hard';
+
+    // Combine all insights into a single string
+    const combinedInsights = insightsArray.join('\n');
 
     // Store activity
     const activity = await Activity.create({
@@ -49,17 +52,15 @@ exports.createActivity = async (req, res) => {
       durationMinutes: durationMinutes || 0,
       notes: notes || '',
       difficulty,
-      insights
+      insights: insightsArray // keep as array if you want for frontend display
     });
 
-    // Save AI insights to AIInsights collection
-    for (const insight of insights) {
-      await AIInsight.create({
-        user: req.user._id,
-        title: `${subject} - ${topic}`,
-        content: insight
-      });
-    }
+    // Save AI insights as a single AIInsight document
+    await AIInsight.create({
+      user: req.user._id,
+      title: `${subject} - ${topic}`,
+      content: combinedInsights
+    });
 
     res.status(201).json(activity);
   } catch (err) {
@@ -67,6 +68,7 @@ exports.createActivity = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 exports.deleteActivity = async (req, res) => {
   try {
