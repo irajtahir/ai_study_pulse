@@ -10,7 +10,7 @@ async function askHF(prompt) {
       {
         model: HF_MODEL,
         messages: [{ role: "user", content: prompt }],
-        max_tokens: 200,
+        max_tokens: 1200, 
         temperature: 0.7
       },
       {
@@ -21,10 +21,10 @@ async function askHF(prompt) {
       }
     );
 
-    return response.data?.choices?.[0]?.message?.content || "HF AI error";
+    return response.data?.choices?.[0]?.message?.content || "";
   } catch (err) {
     console.error("HF API ERROR:", err.response?.data || err.message);
-    return "HF AI error. Please try again later.";
+    return "";
   }
 }
 

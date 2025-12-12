@@ -1,7 +1,5 @@
-// backend/controllers/quizzesController.js
-
-const Quiz = require('../models/Quiz');
-const askHF = require('../services/aiService');
+const Quiz = require("../models/Quiz");
+const askHF = require("../services/aiService");
 
 /**
  * 1) Find user's weak topics based on quiz scores
@@ -11,11 +9,9 @@ exports.getWeakTopics = async (req, res) => {
     const quizzes = await Quiz.find({ user: req.user._id }).lean();
 
     const topicMap = {};
-
     quizzes.forEach(q => {
       if (q.score == null) return;
-      const topic = q.topic || 'General';
-
+      const topic = q.topic || "General";
       if (!topicMap[topic]) topicMap[topic] = { total: 0, count: 0 };
       topicMap[topic].total += q.score;
       topicMap[topic].count++;
@@ -23,26 +19,25 @@ exports.getWeakTopics = async (req, res) => {
 
     const sorted = Object.entries(topicMap)
       .map(([topic, data]) => ({ topic, avg: data.total / data.count }))
-      .sort((a, b) => a.avg - b.avg) // lowest average = weakest
+      .sort((a, b) => a.avg - b.avg)
       .slice(0, 5)
       .map(x => x.topic);
 
     res.json({ weakTopics: sorted, suggestions: sorted });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 /**
- * 2) Generate a quiz with AI (fallback to dummy if AI fails)
+ * 2) Generate a quiz using AI (with fallback)
  */
 exports.generateQuiz = async (req, res) => {
   const { topic, numQuestions = 5 } = req.body;
 
-  if (!topic || !topic.trim()) {
-    return res.status(400).json({ message: 'Topic required' });
-  }
+  if (!topic || !topic.trim())
+    return res.status(400).json({ message: "Topic required" });
 
   const n = Math.max(1, Math.min(50, Number(numQuestions) || 5));
 
@@ -65,35 +60,40 @@ Rules:
 - Each question must be unique.
 - Options must be meaningful.
 - 'answer' must exactly match one of the options.
-- Do NOT include explanations.
 - Return ONLY JSON.
+- Do NOT include explanations or extra text.
 `;
 
     const aiResponse = await askHF(prompt);
 
-    let parsed;
+    let parsed = null;
 
     try {
-      // Extract JSON from AI output
+      // Try to parse JSON safely
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) throw new Error('No valid JSON found');
+      if (!jsonMatch) throw new Error("No valid JSON found");
 
       parsed = JSON.parse(jsonMatch[0]);
 
-      if (!parsed.questions || !Array.isArray(parsed.questions)) {
-        throw new Error('Invalid AI JSON structure');
-      }
-
+      if (!parsed.questions || !Array.isArray(parsed.questions))
+        throw new Error("Invalid AI JSON structure");
     } catch (err) {
-      console.log('AI JSON parse/failure → using fallback:', err.message, 'Raw AI:', aiResponse);
+      console.log(
+        "AI JSON parse/failure → using fallback:",
+        err.message,
+        "Raw AI:",
+        aiResponse
+      );
 
-      // fallback: simple dummy MCQs
+      // fallback dummy MCQs
       parsed = {
-        questions: Array(n).fill(null).map((_, idx) => ({
-          question: `Sample Q${idx + 1}: What is the definition of ${topic}?`,
-          options: ['Option A', 'Option B', 'Option C', 'Option D'],
-          answer: 'Option A'
-        }))
+        questions: Array(n)
+          .fill(null)
+          .map((_, idx) => ({
+            question: `Sample Q${idx + 1}: What is the definition of ${topic}?`,
+            options: ["Option A", "Option B", "Option C", "Option D"],
+            answer: "Option A",
+          })),
       };
     }
 
@@ -101,14 +101,13 @@ Rules:
       user: req.user._id,
       topic,
       questions: parsed.questions,
-      score: null
+      score: null,
     });
 
     res.status(201).json(quiz);
-
   } catch (err) {
-    console.error('Failed to generate quiz:', err);
-    res.status(500).json({ message: 'Failed to generate quiz' });
+    console.error("Failed to generate quiz:", err);
+    res.status(500).json({ message: "Failed to generate quiz" });
   }
 };
 
@@ -121,41 +120,41 @@ exports.listQuizzes = async (req, res) => {
     res.json(quizzes);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 /**
- * 4) Get quiz by ID (ensure belongs to user)
+ * 4) Get quiz by ID
  */
 exports.getQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
     if (String(quiz.user) !== String(req.user._id))
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: "Not authorized" });
 
     res.json(quiz);
   } catch (err) {
     console.error(err);
-    if (err.kind === 'ObjectId') return res.status(404).json({ message: 'Quiz not found' });
-    res.status(500).json({ message: 'Server error' });
+    if (err.kind === "ObjectId") return res.status(404).json({ message: "Quiz not found" });
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 /**
- * 5) Submit quiz and calculate score
+ * 5) Submit quiz
  */
 exports.submitQuiz = async (req, res) => {
   try {
     const quiz = await Quiz.findById(req.params.id);
-    if (!quiz) return res.status(404).json({ message: 'Quiz not found' });
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
     if (String(quiz.user) !== String(req.user._id))
-      return res.status(403).json({ message: 'Not authorized' });
+      return res.status(403).json({ message: "Not authorized" });
 
     const { answers } = req.body;
     if (!Array.isArray(answers))
-      return res.status(400).json({ message: 'Answers must be an array' });
+      return res.status(400).json({ message: "Answers must be an array" });
 
     let correctCount = 0;
     const correctIndices = [];
@@ -178,12 +177,11 @@ exports.submitQuiz = async (req, res) => {
       scorePercent: Math.round(quiz.score),
       scoreRaw: correctCount,
       total: quiz.questions.length,
-      correctIndices
+      correctIndices,
     });
-
   } catch (err) {
     console.error(err);
-    if (err.kind === 'ObjectId') return res.status(404).json({ message: 'Quiz not found' });
-    res.status(500).json({ message: 'Server error' });
+    if (err.kind === "ObjectId") return res.status(404).json({ message: "Quiz not found" });
+    res.status(500).json({ message: "Server error" });
   }
 };
