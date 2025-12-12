@@ -52,11 +52,10 @@ exports.createActivity = async (req, res) => {
 
     // Save AI insights as messages of type 'activity'
     for (const insight of insights) {
-      await Message.create({
+      await AIInsight.create({
         user: req.user._id,
-        role: 'ai',
-        text: insight,
-        type: 'activity' // important! mark as activity
+        title: `${subject} - ${topic}`,
+        content: insight // important! mark as activity
       });
     }
 
@@ -143,10 +142,12 @@ exports.getStats = async (req, res) => {
     });
 
     // Combine activity insights and AI messages
+    const aiInsights = await AIInsight.find({ user: req.user._id });
     const allInsights = [
-      ...activities.flatMap(a => a.insights || []),
-      ...aiMessages.map(m => m.text)
-    ];
+     ...activities.flatMap(a => a.insights || []),
+    ...aiInsights.map(ins => ins.content)
+  ];
+
 
     // Aggregate insights
     const insightsMap = {};
