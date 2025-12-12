@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 const HF_API_KEY = process.env.HF_API_KEY;
-const HF_MODEL = process.env.HF_MODEL || "tiiuae/falcon-7b-instruct";
+const HF_MODEL = process.env.HF_MODEL || "meta-llama/Llama-3.2-1B-Instruct";
 
 async function askHF(prompt) {
   try {
