@@ -6,13 +6,12 @@ const HF_MODEL = process.env.HF_MODEL || "tiiuae/falcon-7b-instruct";
 async function askHF(prompt) {
   try {
     const response = await axios.post(
-      `https://api-inference.huggingface.co/models/${HF_MODEL}`,
+      "https://router.huggingface.co/v1/chat/completions",
       {
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 200,
-          temperature: 0.7,
-        },
+        model: HF_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        max_tokens: 200,
+        temperature: 0.7
       },
       {
         headers: {
@@ -22,11 +21,7 @@ async function askHF(prompt) {
       }
     );
 
-    const text =
-      response.data?.[0]?.generated_text ||
-      "AI response error (empty).";
-
-    return text.replace(prompt, "").trim();
+    return response.data?.choices?.[0]?.message?.content || "HF AI error";
   } catch (err) {
     console.error("HF API ERROR:", err.response?.data || err.message);
     return "HF AI error. Please try again later.";
