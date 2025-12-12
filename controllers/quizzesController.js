@@ -9,7 +9,7 @@ exports.getWeakTopics = async (req, res) => {
     const quizzes = await Quiz.find({ user: req.user._id }).lean();
 
     const topicMap = {};
-    quizzes.forEach(q => {
+    quizzes.forEach((q) => {
       if (q.score == null) return;
       const topic = q.topic || "General";
       if (!topicMap[topic]) topicMap[topic] = { total: 0, count: 0 };
@@ -21,7 +21,7 @@ exports.getWeakTopics = async (req, res) => {
       .map(([topic, data]) => ({ topic, avg: data.total / data.count }))
       .sort((a, b) => a.avg - b.avg)
       .slice(0, 5)
-      .map(x => x.topic);
+      .map((x) => x.topic);
 
     res.json({ weakTopics: sorted, suggestions: sorted });
   } catch (err) {
@@ -69,7 +69,6 @@ Rules:
     let parsed = null;
 
     try {
-      // Try to parse JSON safely
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No valid JSON found");
 
@@ -143,7 +142,7 @@ exports.getQuiz = async (req, res) => {
 };
 
 /**
- * 5) Submit quiz
+ * 5) Submit quiz and return user answers
  */
 exports.submitQuiz = async (req, res) => {
   try {
@@ -178,6 +177,7 @@ exports.submitQuiz = async (req, res) => {
       scoreRaw: correctCount,
       total: quiz.questions.length,
       correctIndices,
+      userAnswers: answers, // send back selected answers for highlighting
     });
   } catch (err) {
     console.error(err);
