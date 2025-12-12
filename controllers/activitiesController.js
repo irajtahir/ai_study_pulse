@@ -1,7 +1,7 @@
 // backend/controllers/activitiesController.js
 const Activity = require('../models/Activity');
 const Message = require('../models/Message');
-const { askAI } = require('../services/aiService');
+const askHF = require('../services/aiService');
 
 /**
  * Get all activities of current user
@@ -32,7 +32,7 @@ exports.createActivity = async (req, res) => {
     `;
 
     // Ask OpenAI
-    const aiResponse = await askAI(prompt);
+    const aiResponse = await askHF(prompt);
 
     // Split AI response into insights and determine difficulty
     // You can customize parsing here depending on how you want to store it
