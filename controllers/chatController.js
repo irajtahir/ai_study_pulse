@@ -1,12 +1,13 @@
+// controllers/chatController.js
 const Message = require("../models/Message");
 const askHF = require("../services/aiService"); // HF AI service
 
-// Fetch all chat messages of logged-in user (exclude insights/activity)
+// Fetch all real-time chat messages of the logged-in user
 const getMessages = async (req, res) => {
   try {
-    const messages = await Message.find({ 
-      user: req.user._id, 
-      type: "chat" // ONLY chat messages
+    const messages = await Message.find({
+      user: req.user._id,
+      type: "chat", // Only real-time chat messages
     }).sort({ createdAt: 1 });
 
     res.json(messages);
@@ -16,7 +17,7 @@ const getMessages = async (req, res) => {
   }
 };
 
-// Send user message + get AI response (type: chat)
+// Send a chat message and get AI reply
 const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
@@ -24,23 +25,23 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Message is required" });
     }
 
-    // Save user message
+    // Save user message as type 'chat'
     const userMessage = await Message.create({
       user: req.user._id,
       role: "user",
       text,
-      type: "chat" // Ensure it's chat type
+      type: "chat", // real-time chat
     });
 
-    // Get AI response
+    // Get AI reply from Hugging Face
     const aiText = await askHF(text);
 
-    // Save AI message
+    // Save AI message as type 'chat'
     const aiMessage = await Message.create({
       user: req.user._id,
       role: "ai",
       text: aiText,
-      type: "chat" // Ensure it's chat type
+      type: "chat", // real-time chat
     });
 
     return res.json({ userMessage, aiMessage });
