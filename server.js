@@ -11,6 +11,8 @@ const activitiesRoutes = require('./routes/activities');
 const quizzesRoutes = require('./routes/quizzes');
 const chatRoutes = require('./routes/chat');
 const notesRoutes = require('./routes/notes'); 
+const adminAuthRoutes = require("./routes/adminAuth");
+
 
 const app = express();
 
@@ -35,6 +37,8 @@ app.use('/api/activities', activitiesRoutes);
 app.use('/api/quizzes', quizzesRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notes', notesRoutes);
+app.use("/api/admin", adminAuthRoutes);
+
 
 // Serve React frontend in production
 if (process.env.NODE_ENV === 'production') {
