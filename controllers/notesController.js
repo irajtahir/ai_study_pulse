@@ -1,4 +1,3 @@
-// backend/controllers/notesController.js
 const Note = require('../models/Note');
 const askHF = require('../services/aiService'); // your existing HF service
 
@@ -62,16 +61,37 @@ const getNoteById = async (req, res) => {
   }
 };
 
+// Update a note by id
+const updateNote = async (req, res) => {
+  try {
+    const note = await Note.findOne({ _id: req.params.id, user: req.user._id });
+    if (!note) return res.status(404).json({ message: 'Note not found' });
+
+    const { subject, topic, content, instructions } = req.body;
+
+    if (subject) note.subject = subject;
+    if (topic) note.topic = topic;
+    if (content) note.content = content;
+    if (instructions) note.instructions = instructions;
+
+    await note.save();
+    res.json(note);
+  } catch (err) {
+    console.error('Update Note Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Delete a note
 const deleteNote = async (req, res) => {
   try {
     const note = await Note.findOneAndDelete({ _id: req.params.id, user: req.user._id });
     if (!note) return res.status(404).json({ message: 'Note not found' });
-    res.json({ message: 'Note deleted' });
+    res.json({ message: 'Note deleted successfully' });
   } catch (err) {
     console.error('Delete Note Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = { createNote, getNotes, getNoteById, deleteNote };
+module.exports = { createNote, getNotes, getNoteById, updateNote, deleteNote };
