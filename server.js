@@ -12,9 +12,13 @@ const quizzesRoutes = require('./routes/quizzes');
 const chatRoutes = require('./routes/chat');
 const notesRoutes = require('./routes/notes'); 
 const adminAuthRoutes = require("./routes/adminAuth");
+const adminRoutes = require("./routes/admin");
 
 
 const app = express();
+
+// Parse JSON requests
+app.use(express.json());
 
 // CORS configuration
 app.use(cors({
@@ -23,8 +27,6 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Parse JSON requests
-app.use(express.json());
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -38,6 +40,7 @@ app.use('/api/quizzes', quizzesRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notes', notesRoutes);
 app.use("/api/admin", adminAuthRoutes);
+app.use("/api/admin", adminRoutes);
 
 
 // Serve React frontend in production
