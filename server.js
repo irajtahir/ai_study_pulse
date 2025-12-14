@@ -14,6 +14,7 @@ const notesRoutes = require('./routes/notes');
 const adminAuthRoutes = require("./routes/adminAuth");
 const adminRoutes = require("./routes/admin");
 const teacherRoutes = require("./routes/teacher");
+const studentRoutes = require("./routes/student");
 
 
 
@@ -45,6 +46,7 @@ app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/api/student", studentRoutes);
 
 
 // Serve React frontend in production

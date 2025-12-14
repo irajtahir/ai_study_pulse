@@ -4,7 +4,8 @@ const { joinClass, getStudentClasses, getClassById } = require("../controllers/t
 const { protect } = require("../middleware/auth"); // assuming you already have auth middleware
 
 // Join class by code
-router.post("/classes/join", protect, joinClass);
+// router.post("/classes/join", protect, joinClass);
+router.post("/join", protect, joinClass);
 
 // Get all joined classes
 router.get("/classes", protect, getStudentClasses);
