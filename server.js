@@ -72,6 +72,8 @@ app.use("/api/teacher", teacherRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/student", studentRoutes);
 app.use("/uploads", express.static("uploads"));
+app.use("/uploads/materials", express.static("uploads/materials"));
+
 
 // Serve React frontend
 if (process.env.NODE_ENV === 'production') {

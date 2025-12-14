@@ -12,7 +12,7 @@ const {
   getStudentClasses,
   getClassById,
   createAnnouncement,
-  uploadMaterial // <-- added
+  uploadMaterial 
 } = require("../controllers/teacherController");
 
 const {
