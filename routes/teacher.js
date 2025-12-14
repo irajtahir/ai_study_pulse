@@ -3,12 +3,12 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
-
 const {
   createClass,
   getTeacherClasses,
   joinClass,
-  getStudentClasses
+  getStudentClasses,
+  getClassById,
 } = require("../controllers/teacherController");
 
 /* 👨‍🏫 Teacher */
@@ -24,6 +24,13 @@ router.get(
   authMiddleware,
   roleMiddleware("teacher"),
   getTeacherClasses
+);
+
+router.get(
+  "/classes/:id",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  getClassById
 );
 
 /* 🎓 Student */
