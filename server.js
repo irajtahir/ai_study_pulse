@@ -13,6 +13,8 @@ const chatRoutes = require('./routes/chat');
 const notesRoutes = require('./routes/notes'); 
 const adminAuthRoutes = require("./routes/adminAuth");
 const adminRoutes = require("./routes/admin");
+const teacherRoutes = require("./routes/teacher");
+
 
 
 const app = express();
@@ -41,6 +43,7 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/notes', notesRoutes);
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/teacher", teacherRoutes);
 
 
 // Serve React frontend in production
