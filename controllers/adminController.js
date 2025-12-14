@@ -93,16 +93,30 @@ exports.getClassByIdAdmin = async (req, res) => {
   try {
     const classId = req.params.id;
 
+    // Fetch class with teacher, students, and materials
     const cls = await Class.findById(classId)
       .populate("teacher", "name email")
       .populate("students", "name email")
-      .populate("assignments")
-      .populate("materials")
-      .populate("announcements");
+      .populate("materials");
 
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    res.status(200).json(cls);
+    // Fetch assignments separately
+    const Assignment = require("../models/Assignment");
+    const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
+
+    // Return everything together
+    res.status(200).json({
+      _id: cls._id,
+      name: cls.name,
+      subject: cls.subject,
+      code: cls.code,
+      teacher: cls.teacher,
+      students: cls.students,
+      announcements: cls.announcements,
+      materials: cls.materials,
+      assignments: assignments
+    });
   } catch (err) {
     console.error("Get class by admin error:", err);
     res.status(500).json({ message: "Server error" });
