@@ -6,11 +6,20 @@ const roleMiddleware = require("../middleware/role");
 
 const {
   getAllUsers,
-  getUserDetails
+  getUserDetails,
+  deleteUserByAdmin   // ✅ NEW
 } = require("../controllers/adminController");
 
 // Admin only routes
 router.get("/users", authMiddleware, roleMiddleware("admin"), getAllUsers);
 router.get("/users/:id", authMiddleware, roleMiddleware("admin"), getUserDetails);
+
+// ✅ DELETE USER (ADMIN)
+router.delete(
+  "/users/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  deleteUserByAdmin
+);
 
 module.exports = router;
