@@ -11,7 +11,8 @@ const {
   joinClass,
   getStudentClasses,
   getClassById,
-  createAnnouncement, // <-- added
+  createAnnouncement,
+  uploadMaterial // <-- added
 } = require("../controllers/teacherController");
 
 const {
@@ -30,6 +31,15 @@ router.post("/classes/:id/announcement", authMiddleware, roleMiddleware("teacher
 /* 📝 Assignments */
 router.post("/classes/:classId/assignments", authMiddleware, roleMiddleware("teacher"), upload.single("file"), createAssignment);
 router.get("/classes/:classId/assignments", authMiddleware, getAssignmentsByClass);
+
+/* 📄 Upload Material */
+router.post(
+  "/classes/:id/material",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  upload.single("file"),   
+  uploadMaterial            
+);
 
 /* 🎓 Student */
 router.post("/join", authMiddleware, roleMiddleware("student"), joinClass);

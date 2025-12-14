@@ -160,3 +160,38 @@ exports.createAssignment = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* 📄 Upload Material */
+exports.uploadMaterial = async (req, res) => {
+  try {
+    const { title, content } = req.body; // frontend sends "title" and "content"
+    const cls = await Class.findById(req.params.id);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+    if (cls.teacher.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Only teacher can upload materials" });
+
+    let fileUrl = null;
+    if (req.file) {
+      fileUrl = `/uploads/${req.file.filename}`; // make sure this folder is served statically
+    }
+
+    const newMaterial = { title, content, fileUrl, createdAt: new Date() };
+    cls.materials.push(newMaterial);
+    await cls.save();
+
+    // Send notification to students
+    const io = req.app.locals.io;
+    cls.students.forEach(studentId => {
+      io.to(studentId.toString()).emit("newNotification", {
+        type: "material",
+        message: `New material uploaded in ${cls.name}: "${title}"`
+      });
+    });
+
+    res.status(201).json({ message: "Material uploaded successfully", material: newMaterial });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
