@@ -1,5 +1,4 @@
 const Class = require("../models/Class");
-const User = require("../models/User");
 const crypto = require("crypto");
 
 /* 🏫 Create Class (Teacher) */
@@ -11,15 +10,13 @@ exports.createClass = async (req, res) => {
       return res.status(400).json({ message: "Name & subject are required" });
     }
 
-    // Generate unique 6-character class code
-    const generateCode = () => crypto.randomBytes(3).toString("hex").toUpperCase();
-
     let code;
     let exists = true;
+
     while (exists) {
-      code = generateCode();
-      const existingClass = await Class.findOne({ code });
-      if (!existingClass) exists = false;
+      code = crypto.randomBytes(3).toString("hex").toUpperCase();
+      const check = await Class.findOne({ code });
+      if (!check) exists = false;
     }
 
     const newClass = await Class.create({
@@ -31,18 +28,18 @@ exports.createClass = async (req, res) => {
 
     res.status(201).json(newClass);
   } catch (err) {
-    console.error("Create class error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/* 📚 Get Teacher's Classes */
+/* 📚 Teacher Classes */
 exports.getTeacherClasses = async (req, res) => {
   try {
-    const classes = await Class.find({ teacher: req.user._id }).sort({ createdAt: -1 });
+    const classes = await Class.find({ teacher: req.user._id })
+      .sort({ createdAt: -1 });
     res.json(classes);
   } catch (err) {
-    console.error("Get teacher classes error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -62,42 +59,44 @@ exports.joinClass = async (req, res) => {
     cls.students.push(req.user._id);
     await cls.save();
 
-    res.json({ message: "Joined successfully", class: cls });
+    res.json({ message: "Joined successfully" });
   } catch (err) {
-    console.error("Join class error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/* 📖 Get Classes Joined by Student */
+/* 📖 Student Joined Classes */
 exports.getStudentClasses = async (req, res) => {
   try {
-    const classes = await Class.find({ students: req.user._id }).populate(
-      "teacher",
-      "name email"
-    );
+    const classes = await Class.find({ students: req.user._id })
+      .populate("teacher", "name email");
     res.json(classes);
   } catch (err) {
-    console.error("Get student classes error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/* 🔹 Get Class Details by ID (Teacher & Students) */
+/* ✅ CLASS DETAILS (Teacher + Student BOTH) */
 exports.getClassById = async (req, res) => {
   try {
     const cls = await Class.findById(req.params.id)
       .populate("teacher", "name email")
-      .populate("students", "name email")
-      .populate("assignments")
-      .populate("materials")
-      .populate("announcements");
+      .populate("students", "name email");
 
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
+    // ❗ Authorization check
+    const isTeacher = cls.teacher._id.toString() === req.user._id.toString();
+    const isStudent = cls.students.some(
+      s => s._id.toString() === req.user._id.toString()
+    );
+
+    if (!isTeacher && !isStudent) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
     res.json(cls);
   } catch (err) {
-    console.error("Get class by ID error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
