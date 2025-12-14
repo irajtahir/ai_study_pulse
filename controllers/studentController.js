@@ -34,32 +34,20 @@ exports.joinClass = async (req, res) => {
   }
 };
 
-// Get assignments for a class along with submission status
+/* Get assignments for a class along with submission status */
 exports.getAssignmentsForClass = async (req, res) => {
   try {
     const classId = req.params.classId;
-
-    // Check if student joined this class
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-
-    if (!cls.students.includes(req.user._id))
-      return res.status(403).json({ message: "Access denied" });
+    if (!cls.students.includes(req.user._id)) return res.status(403).json({ message: "Access denied" });
 
     const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
 
-    // Add submission info for each assignment
     const assignmentsWithSubmission = await Promise.all(
       assignments.map(async (a) => {
-        const submission = await Submission.findOne({
-          assignment: a._id,
-          student: req.user._id
-        });
-        return {
-          ...a.toObject(),
-          submitted: !!submission,
-          submissionId: submission?._id || null
-        };
+        const submission = await Submission.findOne({ assignment: a._id, student: req.user._id });
+        return { ...a.toObject(), submitted: !!submission };
       })
     );
 
@@ -70,24 +58,19 @@ exports.getAssignmentsForClass = async (req, res) => {
   }
 };
 
-// Submit assignment (file + optional text)
+/* Submit assignment (file + optional text) */
 exports.submitAssignment = async (req, res) => {
   try {
     const { classId, assignmentId } = req.params;
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-
-    if (!cls.students.includes(req.user._id))
-      return res.status(403).json({ message: "Access denied" });
+    if (!cls.students.includes(req.user._id)) return res.status(403).json({ message: "Access denied" });
 
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) return res.status(404).json({ message: "Assignment not found" });
 
     // Check if already submitted
-    const existing = await Submission.findOne({
-      assignment: assignmentId,
-      student: req.user._id
-    });
+    const existing = await Submission.findOne({ assignment: assignmentId, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Assignment already submitted" });
 
     const fileUrl = req.file ? `/uploads/submissions/${req.file.filename}` : null;
@@ -97,7 +80,7 @@ exports.submitAssignment = async (req, res) => {
       assignment: assignmentId,
       student: req.user._id,
       file: fileUrl,
-      answerText: answerText || ""
+      answerText: answerText || "",
     });
 
     res.status(201).json({ message: "Assignment submitted successfully", submission });
@@ -106,4 +89,3 @@ exports.submitAssignment = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-

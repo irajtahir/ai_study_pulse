@@ -24,5 +24,4 @@ router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
 // Submit assignment
 router.post("/classes/:classId/assignments/:assignmentId/submit", protect, upload.single("file"), submitAssignment);
 
-
 module.exports = router;
