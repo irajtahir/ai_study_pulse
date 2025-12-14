@@ -11,6 +11,7 @@ const {
   joinClass,
   getStudentClasses,
   getClassById,
+  createAnnouncement, // <-- added
 } = require("../controllers/teacherController");
 
 const {
@@ -19,54 +20,19 @@ const {
 } = require("../controllers/assignmentController");
 
 /* 👨‍🏫 Teacher Classes */
-router.post(
-  "/classes",
-  authMiddleware,
-  roleMiddleware("teacher"),
-  createClass
-);
+router.post("/classes", authMiddleware, roleMiddleware("teacher"), createClass);
+router.get("/classes", authMiddleware, roleMiddleware("teacher"), getTeacherClasses);
+router.get("/classes/:id", authMiddleware, getClassById);
 
-router.get(
-  "/classes",
-  authMiddleware,
-  roleMiddleware("teacher"),
-  getTeacherClasses
-);
-
-router.get(
-  "/classes/:id",
-  authMiddleware,
-  getClassById
-);
+/* 🎓 Announcements */
+router.post("/classes/:id/announcement", authMiddleware, roleMiddleware("teacher"), createAnnouncement);
 
 /* 📝 Assignments */
-router.post(
-  "/classes/:classId/assignments",
-  authMiddleware,
-  roleMiddleware("teacher"),
-  upload.single("file"),
-  createAssignment
-);
-
-router.get(
-  "/classes/:classId/assignments",
-  authMiddleware,
-  getAssignmentsByClass
-);
+router.post("/classes/:classId/assignments", authMiddleware, roleMiddleware("teacher"), upload.single("file"), createAssignment);
+router.get("/classes/:classId/assignments", authMiddleware, getAssignmentsByClass);
 
 /* 🎓 Student */
-router.post(
-  "/join",
-  authMiddleware,
-  roleMiddleware("student"),
-  joinClass
-);
-
-router.get(
-  "/my-classes",
-  authMiddleware,
-  roleMiddleware("student"),
-  getStudentClasses
-);
+router.post("/join", authMiddleware, roleMiddleware("student"), joinClass);
+router.get("/my-classes", authMiddleware, roleMiddleware("student"), getStudentClasses);
 
 module.exports = router;
