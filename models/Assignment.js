@@ -4,27 +4,30 @@ const AssignmentSchema = new mongoose.Schema({
   class: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Class",
-    required: true
+    required: true,
   },
   teacher: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true
+    required: true,
   },
   title: {
     type: String,
-    required: true
+    required: true,
   },
   instructions: {
-    type: String
+    type: String,
   },
   dueDate: {
-    type: Date
+    type: Date,
+  },
+  attachment: {
+    type: String, // file URL
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("Assignment", AssignmentSchema);

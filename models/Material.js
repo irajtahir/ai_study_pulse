@@ -15,13 +15,13 @@ const MaterialSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  type: {
-    type: String,
-    enum: ["note", "pdf", "image", "video"],
-    required: true
-  },
   content: {
-    type: String // text OR file URL
+    type: String, // 👈 teacher instructions / description
+    default: ""
+  },
+  fileUrl: {
+    type: String, // optional file
+    default: ""
   },
   createdAt: {
     type: Date,

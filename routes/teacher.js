@@ -3,24 +3,70 @@ const router = express.Router();
 
 const authMiddleware = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
+const upload = require("../middleware/upload");
 
 const {
   createClass,
   getTeacherClasses,
   joinClass,
   getStudentClasses,
-  getClassById
+  getClassById,
 } = require("../controllers/teacherController");
 
-/* 👨‍🏫 Teacher */
-router.post("/classes", authMiddleware, roleMiddleware("teacher"), createClass);
-router.get("/classes", authMiddleware, roleMiddleware("teacher"), getTeacherClasses);
+const {
+  createAssignment,
+  getAssignmentsByClass,
+} = require("../controllers/assignmentController");
+
+/* 👨‍🏫 Teacher Classes */
+router.post(
+  "/classes",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  createClass
+);
+
+router.get(
+  "/classes",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  getTeacherClasses
+);
+
+router.get(
+  "/classes/:id",
+  authMiddleware,
+  getClassById
+);
+
+/* 📝 Assignments */
+router.post(
+  "/classes/:classId/assignments",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  upload.single("file"),
+  createAssignment
+);
+
+router.get(
+  "/classes/:classId/assignments",
+  authMiddleware,
+  getAssignmentsByClass
+);
 
 /* 🎓 Student */
-router.post("/join", authMiddleware, roleMiddleware("student"), joinClass);
-router.get("/my-classes", authMiddleware, roleMiddleware("student"), getStudentClasses);
+router.post(
+  "/join",
+  authMiddleware,
+  roleMiddleware("student"),
+  joinClass
+);
 
-/* ✅ COMMON (Teacher + Student) */
-router.get("/classes/:id", authMiddleware, getClassById);
+router.get(
+  "/my-classes",
+  authMiddleware,
+  roleMiddleware("student"),
+  getStudentClasses
+);
 
 module.exports = router;

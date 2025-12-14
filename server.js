@@ -44,6 +44,7 @@ app.use('/api/notes', notesRoutes);
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/teacher", teacherRoutes);
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
 // Serve React frontend in production
