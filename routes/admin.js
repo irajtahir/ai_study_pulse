@@ -10,14 +10,17 @@ const Class = require("../models/Class");
 const {
   getAllUsers,
   getUserDetails,
-  deleteUserByAdmin 
+  deleteUserByAdmin,
+  getClassByIdAdmin // <- import
 } = require("../controllers/adminController");
 
 // Admin only routes
 router.get("/users", authMiddleware, roleMiddleware("admin"), getAllUsers);
 router.get("/users/:id", authMiddleware, roleMiddleware("admin"), getUserDetails);
+router.delete("/users/:id", authMiddleware, roleMiddleware("admin"), deleteUserByAdmin);
 
-router.get("/teachers/:id/classes", async (req, res) => {
+// Admin fetch teacher's classes
+router.get("/teachers/:id/classes", authMiddleware, roleMiddleware("admin"), async (req, res) => {
   try {
     const teacherId = req.params.id;
     const classes = await Class.find({ teacher: teacherId })
@@ -30,12 +33,7 @@ router.get("/teachers/:id/classes", async (req, res) => {
   }
 });
 
-// ✅ DELETE USER (ADMIN)
-router.delete(
-  "/users/:id",
-  authMiddleware,
-  roleMiddleware("admin"),
-  deleteUserByAdmin
-);
+// ✅ Admin fetch single class details
+router.get("/classes/:id", authMiddleware, roleMiddleware("admin"), getClassByIdAdmin);
 
 module.exports = router;

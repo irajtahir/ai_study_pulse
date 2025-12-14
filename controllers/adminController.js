@@ -3,6 +3,7 @@ const Activity = require("../models/Activity");
 const Quiz = require("../models/Quiz");
 const Note = require("../models/Note");
 const AIInsight = require("../models/AIInsight");
+const Class = require("../models/Class");
 
 /* =====================================================
    👥 Get all registered users (Exclude admins)
@@ -84,6 +85,26 @@ exports.deleteUserByAdmin = async (req, res) => {
     });
   } catch (err) {
     console.error("Delete user error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getClassByIdAdmin = async (req, res) => {
+  try {
+    const classId = req.params.id;
+
+    const cls = await Class.findById(classId)
+      .populate("teacher", "name email")
+      .populate("students", "name email")
+      .populate("assignments")
+      .populate("materials")
+      .populate("announcements");
+
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    res.status(200).json(cls);
+  } catch (err) {
+    console.error("Get class by admin error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
