@@ -16,7 +16,8 @@ const ClassSchema = new mongoose.Schema({
   code: { type: String, unique: true, required: true },
   students: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   announcements: [AnnouncementSchema],
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  materials: [{ type: mongoose.Schema.Types.ObjectId, ref: "Material" }]
 });
 
 module.exports = mongoose.model("Class", ClassSchema);
