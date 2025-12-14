@@ -7,7 +7,7 @@ const roleMiddleware = require("../middleware/role");
 const {
   getAllUsers,
   getUserDetails,
-  deleteUserByAdmin   // ✅ NEW
+  deleteUserByAdmin 
 } = require("../controllers/adminController");
 
 // Admin only routes

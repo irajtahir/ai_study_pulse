@@ -36,7 +36,6 @@ exports.getUserDetails = async (req, res) => {
     const quizzes = await Quiz.find({ user: userId }).sort({ createdAt: -1 });
     const notes = await Note.find({ user: userId }).sort({ createdAt: -1 });
 
-    // 🔥 Fetch combined AI insights
     const aiInsights = await AIInsight.find({ user: userId }).sort({ createdAt: -1 });
 
     res.status(200).json({
