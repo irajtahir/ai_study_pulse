@@ -47,6 +47,8 @@ io.on("connection", (socket) => {
 
 // Parse JSON requests
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // CORS
 app.use(cors({
@@ -71,7 +73,6 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/api/student", studentRoutes);
-app.use("/uploads", express.static("uploads"));
 app.use("/uploads/materials", express.static("uploads/materials"));
 
 
