@@ -98,6 +98,8 @@ exports.submitAssignment = async (req, res) => {
     const fileUrl = req.file ? `/uploads/submissions/${req.file.filename}` : null;
     const { answerText } = req.body;
 
+    console.log("File uploaded:", req.file);
+
     const submission = await Submission.create({
       assignment: assignmentId,
       student: req.user._id,
@@ -107,6 +109,7 @@ exports.submitAssignment = async (req, res) => {
 
     res.status(201).json({ message: "Assignment submitted successfully", submission });
   } catch (err) {
+    console.error("Submit assignment error:", err); 
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
