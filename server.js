@@ -47,15 +47,15 @@ io.on("connection", (socket) => {
 
 // Parse JSON requests
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-
 // CORS
 app.use(cors({
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 
 // MongoDB connection
 mongoose.connect(process.env.MONGO_URI)
