@@ -69,7 +69,9 @@ exports.getAssignmentsForClass = async (req, res) => {
     const assignmentsWithSubmission = await Promise.all(
       assignments.map(async (a) => {
         const submission = await Submission.findOne({ assignment: a._id, student: req.user._id });
-        return { ...a.toObject(), submitted: !!submission };
+        return { ...a.toObject(), submitted: !!submission,
+          submission: submission ? submission.toObject() : null
+         };
       })
     );
 
