@@ -12,7 +12,8 @@ const {
   getStudentClasses,
   getClassById,
   createAnnouncement,
-  uploadMaterial 
+  uploadMaterial,
+  getAssignmentSubmissions
 } = require("../controllers/teacherController");
 
 const {
@@ -31,6 +32,15 @@ router.post("/classes/:id/announcement", authMiddleware, roleMiddleware("teacher
 /* 📝 Assignments */
 router.post("/classes/:classId/assignments", authMiddleware, roleMiddleware("teacher"), upload.single("file"), createAssignment);
 router.get("/classes/:classId/assignments", authMiddleware, getAssignmentsByClass);
+
+/* 📥 Assignment Submissions */
+router.get(
+  "/assignments/:assignmentId/submissions",
+  authMiddleware,
+  roleMiddleware("teacher"),
+  getAssignmentSubmissions
+);
+
 
 /* 📄 Upload Material */
 router.post(

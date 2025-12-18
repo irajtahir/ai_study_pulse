@@ -137,6 +137,24 @@ exports.createAssignment = async (req, res) => {
   }
 };
 
+const Submission = require("../models/Submission");
+
+exports.getAssignmentSubmissions = async (req, res) => {
+  try {
+    const { assignmentId } = req.params;
+
+    const submissions = await Submission.find({ assignment: assignmentId })
+      .populate("student", "name email")
+      .sort({ createdAt: -1 });
+
+    res.json(submissions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 exports.uploadMaterial = async (req, res) => {
   try {
     const { title, content } = req.body;
