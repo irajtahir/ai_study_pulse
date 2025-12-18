@@ -34,6 +34,28 @@ exports.joinClass = async (req, res) => {
   }
 };
 
+// Get single class details for student
+exports.getStudentClassDetails = async (req, res) => {
+  try {
+    const classId = req.params.classId;
+
+    const cls = await Class.findById(classId)
+      .populate("teacher", "name email");
+
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    if (!cls.students.includes(req.user._id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    res.json(cls);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 /* Get assignments for a class along with submission status */
 exports.getAssignmentsForClass = async (req, res) => {
   try {

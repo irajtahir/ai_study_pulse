@@ -3,7 +3,7 @@ const router = express.Router();
 const { protect } = require("../middleware/auth");
 const multer = require("multer");
 const path = require("path");
-const { getStudentClasses, joinClass, getAssignmentsForClass, submitAssignment } = require("../controllers/studentController");
+const { getStudentClasses, joinClass, getAssignmentsForClass, submitAssignment, getStudentClassDetails } = require("../controllers/studentController");
 
 router.get("/classes", protect, getStudentClasses);
 router.post("/classes/join", protect, joinClass);
@@ -17,6 +17,9 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
+
+// class details
+router.get("/classes/:classId", protect, getStudentClassDetails);
 
 // Get assignments for a class
 router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
