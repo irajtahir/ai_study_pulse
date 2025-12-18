@@ -2,17 +2,15 @@ const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
 const Class = require("../models/Class");
 
-/* 📄 Get assignments by class (Teacher) */
+/* Teacher: Get assignments for class */
 const getAssignmentsByClass = async (req, res) => {
   try {
     const cls = await Class.findById(req.params.classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-
     if (cls.teacher.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Access denied" });
 
     const assignments = await Assignment.find({ class: cls._id }).sort({ createdAt: -1 });
-
     res.json(assignments);
   } catch (err) {
     console.error(err);
@@ -20,7 +18,7 @@ const getAssignmentsByClass = async (req, res) => {
   }
 };
 
-/* 📥 Get submissions for an assignment (Teacher) */
+/* Teacher: Get submissions for assignment */
 const getSubmissionsByAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.assignmentId);
@@ -28,7 +26,6 @@ const getSubmissionsByAssignment = async (req, res) => {
 
     const cls = await Class.findById(assignment.class);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-
     if (cls.teacher.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Access denied" });
 
@@ -43,18 +40,15 @@ const getSubmissionsByAssignment = async (req, res) => {
   }
 };
 
-
-/* 👨‍🏫 Create Assignment */
+/* Teacher: Create Assignment */
 const createAssignment = async (req, res) => {
   try {
     const { title, instructions, dueDate } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ message: "Title is required" });
-    }
+    if (!title) return res.status(400).json({ message: "Title is required" });
 
     const cls = await Class.findById(req.params.classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
+    if (cls.teacher.toString() !== req.user._id.toString()) return res.status(403).json({ message: "Access denied" });
 
     const assignment = await Assignment.create({
       class: cls._id,
@@ -62,14 +56,12 @@ const createAssignment = async (req, res) => {
       title,
       instructions,
       dueDate,
-      attachment: req.file
-        ? `/uploads/assignments/${req.file.filename}`
-        : null,
+      attachment: req.file ? `/uploads/assignments/${req.file.filename}` : null
     });
 
     res.status(201).json(assignment);
   } catch (err) {
-    console.error("Create assignment error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -77,5 +69,5 @@ const createAssignment = async (req, res) => {
 module.exports = {
   createAssignment,
   getAssignmentsByClass,
-  getSubmissionsByAssignment,
+  getSubmissionsByAssignment
 };
