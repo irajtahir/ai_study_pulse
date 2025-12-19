@@ -54,26 +54,29 @@ exports.getStudentClasses = async (req, res) => {
 
 exports.getClassById = async (req, res) => {
   try {
-    const cls = await Class.findById(req.params.id)
-      .populate("teacher", "name email");
-    
+    const { id } = req.params;
+
+    const cls = await Class.findById(id)
+      .populate("teacher", "name email")
+      .lean(); // use lean() for plain JS objects
+
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    // Fetch assignments, announcements, materials separately
+    // Fetch related data
     const [assignments, announcements, materials] = await Promise.all([
-      Assignment.find({ class: cls._id }).sort({ createdAt: -1 }),
-      Announcement.find({ class: cls._id }).sort({ createdAt: -1 }),
-      Material.find({ class: cls._id }).sort({ createdAt: -1 })
+      Assignment.find({ class: id }).sort({ createdAt: -1 }).lean(),
+      Announcement.find({ class: id }).sort({ createdAt: -1 }).lean(),
+      Material.find({ class: id }).sort({ createdAt: -1 }).lean(),
     ]);
 
     res.json({
-      ...cls.toObject(),
-      assignments,
-      announcements,
-      materials
+      ...cls,
+      assignments: assignments || [],
+      announcements: announcements || [],
+      materials: materials || [],
     });
   } catch (err) {
-    console.error(err);
+    console.error("getClassById error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
