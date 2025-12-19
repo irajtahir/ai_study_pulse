@@ -172,16 +172,43 @@ exports.getClassByIdAdmin = async (req, res) => {
 ===================================================== */
 exports.getTeacherClassesAdmin = async (req, res) => {
   try {
-    const teacherId = req.params.id;
+    const { teacherId } = req.params;
 
     const classes = await Class.find({ teacher: teacherId })
       .populate("students", "name email")
-      .sort({ createdAt: -1 });
+      .select("name subject students");
 
-    res.status(200).json({ classes });
-  } catch (err) {
-    console.error("Get teacher classes error:", err);
-    res.status(500).json({ message: "Server error" });
+    res.json({ classes });
+  } catch (error) {
+    console.error("getTeacherClassesAdmin error:", error);
+    res.status(500).json({ message: "Failed to load teacher classes" });
+  }
+};
+
+exports.getTeacherSingleClassAdmin = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    const classData = await Class.findById(classId)
+      .populate("students", "name email")
+      .populate("materials")
+      .populate("announcements")
+      .populate({
+        path: "assignments",
+        populate: {
+          path: "submissions",
+          populate: { path: "student", select: "name email" }
+        }
+      });
+
+    if (!classData) {
+      return res.status(404).json({ message: "Class not found" });
+    }
+
+    res.json(classData);
+  } catch (error) {
+    console.error("getTeacherSingleClassAdmin error:", error);
+    res.status(500).json({ message: "Failed to load class details" });
   }
 };
 
