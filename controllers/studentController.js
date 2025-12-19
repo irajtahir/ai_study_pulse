@@ -117,26 +117,44 @@ exports.submitAssignment = async (req, res) => {
   }
 };
 
-/* Unsend submission (delete) */
+/* Unsend assignment (delete submission) */
 exports.unsendSubmission = async (req, res) => {
   try {
     const { classId, assignmentId } = req.params;
 
+    // Find class
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-    if (!cls.students.includes(req.user._id)) return res.status(403).json({ message: "Access denied" });
+    if (!cls.students.includes(req.user._id))
+      return res.status(403).json({ message: "Access denied" });
 
+    // Find assignment
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) return res.status(404).json({ message: "Assignment not found" });
 
-    const now = new Date();
-    if (assignment.dueDate && now > assignment.dueDate)
+    // Check due date
+    if (assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
       return res.status(400).json({ message: "Cannot unsend after due date" });
+    }
 
-    const submission = await Submission.findOne({ assignment: assignmentId, student: req.user._id });
-    if (!submission) return res.status(404).json({ message: "No submission found to unsend" });
+    // Find submission
+    const submission = await Submission.findOne({
+      assignment: assignmentId,
+      student: req.user._id,
+    });
 
-    if (submission.file && fs.existsSync(submission.file)) fs.unlinkSync(submission.file);
+    if (!submission)
+      return res.status(400).json({ message: "No submission found to unsend" });
+
+    // Delete file from server if exists
+    if (submission.file) {
+      const fs = require("fs");
+      if (fs.existsSync(submission.file)) {
+        fs.unlinkSync(submission.file);
+      }
+    }
+
+    // Delete submission from DB
     await submission.deleteOne();
 
     res.json({ message: "Submission unsent successfully" });
