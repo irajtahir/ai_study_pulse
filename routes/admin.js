@@ -11,7 +11,8 @@ const {
   deleteUserByAdmin,
   getStudentClassesAdmin,
   getClassByIdAdmin,
-  getStudentSubmissionsAdmin
+  getStudentSubmissionsAdmin,
+  getAssignmentSubmissionsAdmin
 } = require("../controllers/adminController");
 
 /* =====================================================
@@ -59,6 +60,13 @@ router.get(
   authMiddleware,
   roleMiddleware("admin"),
   getStudentSubmissionsAdmin
+);
+
+router.get(
+  "/assignments/:assignmentId/submissions",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getAssignmentSubmissionsAdmin
 );
 
 /* =====================================================

@@ -133,6 +133,28 @@ exports.getStudentSubmissionsAdmin = async (req, res) => {
 };
 
 /* =====================================================
+   📝 Get all submissions of an assignment (ADMIN)
+===================================================== */
+exports.getAssignmentSubmissionsAdmin = async (req, res) => {
+  try {
+    const assignmentId = req.params.assignmentId;
+
+    const submissions = await Submission.find({ assignment: assignmentId })
+      .populate({
+        path: "student",
+        select: "name email",
+      })
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ submissions });
+  } catch (err) {
+    console.error("Get assignment submissions error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/* =====================================================
    🏫 Get single class FULL details (ADMIN)
 ===================================================== */
 exports.getClassByIdAdmin = async (req, res) => {
