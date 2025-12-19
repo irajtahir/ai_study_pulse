@@ -2,6 +2,7 @@ const Class = require("../models/Class");
 const crypto = require("crypto");
 const Assignment = require("../models/Assignment");
 const Material = require("../models/Material");
+const Announcement = require("../models/Announcement");
 
 /* 🏫 Create Class (Teacher) */
 exports.createClass = async (req, res) => {
@@ -52,62 +53,71 @@ exports.getStudentClasses = async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 };
 
+
+/* Get class by ID with all related data */
 exports.getClassById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const cls = await Class.findById(id)
       .populate("teacher", "name email")
-      .populate("assignments")
-      .populate("announcements")
-      .populate("materials")
       .lean();
 
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    res.json(cls);
+    // Fetch related data
+    const [assignments, announcements, materials] = await Promise.all([
+      Assignment.find({ class: id }).sort({ createdAt: -1 }).lean(),
+      Announcement.find({ class: id }).sort({ createdAt: -1 }).populate("teacher", "name email").lean(),
+      Material.find({ class: id }).sort({ createdAt: -1 }).lean(),
+    ]);
+
+    res.json({
+      ...cls,
+      assignments,
+      announcements,
+      materials,
+    });
   } catch (err) {
     console.error("getClassById error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-/* 📝 Create Announcement (Teacher only) with Notifications */
+/* Create announcement */
 exports.createAnnouncement = async (req, res) => {
   try {
     const { text } = req.body;
+    const classId = req.params.id;
+
     if (!text?.trim()) return res.status(400).json({ message: "Announcement text required" });
 
-    const cls = await Class.findById(req.params.id);
-    if (!cls) return res.status(404).json({ message: "Class not found" });
-    if (cls.teacher.toString() !== req.user._id.toString()) return res.status(403).json({ message: "Only teacher can post announcements" });
-
-    const announcement = { text };
-    cls.announcements.push(announcement);
-    await cls.save();
-
-    // 🔔 Emit notification to all students
-    const io = req.app.get("io");
-    cls.students.forEach(studentId => {
-      io.to(studentId.toString()).emit("newNotification", {
-        type: "announcement",
-        message: `New announcement in ${cls.name}: ${text}`,
-        classId: cls._id,
-      });
-    });
-
-    res.status(201).json({ message: "Announcement posted successfully" });
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
-};
-
-exports.getAnnouncementsForClass = async (req, res) => {
-  try {
-    const classId = req.params.id || req.params.classId;
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
+    if (cls.teacher.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Only teacher can post announcements" });
 
-    // No need to check role/student for teacher route
+    const announcement = await Announcement.create({
+      class: classId,
+      teacher: req.user._id,
+      text,
+    });
+
+    cls.announcements.push(announcement._id);
+    await cls.save();
+
+    res.status(201).json({ message: "Announcement posted successfully", announcement });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* Get announcements for class (teacher view) */
+exports.getAnnouncementsForClass = async (req, res) => {
+  try {
+    const classId = req.params.id;
+    const cls = await Class.findById(classId);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
 
     const announcements = await Announcement.find({ class: classId })
       .sort({ createdAt: -1 })
@@ -119,6 +129,10 @@ exports.getAnnouncementsForClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+
+
 
 
 /* 📝 Create Assignment (Teacher only) */

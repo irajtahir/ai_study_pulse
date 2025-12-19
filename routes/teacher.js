@@ -1,4 +1,3 @@
-// backend/routes/teacher.js
 const express = require("express");
 const router = express.Router();
 const upload = require("../middleware/cloudinaryUpload");
@@ -10,16 +9,16 @@ const {
   createClass,
   getTeacherClasses,
   getClassById,
-  uploadMaterial
+  uploadMaterial,
+  createAnnouncement,
+  getAnnouncementsForClass,
 } = require("../controllers/teacherController");
 
 const {
   createAssignment,
   getAssignmentsByClass,
-  getSubmissionsByAssignment
+  getSubmissionsByAssignment,
 } = require("../controllers/assignmentController");
-
-const { createAnnouncement, getAnnouncementsForClass } = require("../controllers/announcementController");
 
 // --------------------
 // Classes
