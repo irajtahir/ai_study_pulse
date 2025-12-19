@@ -101,6 +101,26 @@ exports.createAnnouncement = async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 };
 
+exports.getAnnouncementsForClass = async (req, res) => {
+  try {
+    const classId = req.params.id || req.params.classId;
+    const cls = await Class.findById(classId);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    // No need to check role/student for teacher route
+
+    const announcements = await Announcement.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .populate("teacher", "name email");
+
+    res.json(announcements);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 /* 📝 Create Assignment (Teacher only) */
 exports.createAssignment = async (req, res) => {
   try {

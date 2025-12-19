@@ -32,6 +32,7 @@ router.get("/classes/:id", auth, getClassById);
 // Announcements
 // --------------------
 router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
+router.get("/classes/:id/announcements", auth, role("teacher"), getAnnouncementsForClass);
 
 // --------------------
 // Assignments
