@@ -5,6 +5,7 @@ const Note = require("../models/Note");
 const AIInsight = require("../models/AIInsight");
 const Class = require("../models/Class");
 const Assignment = require("../models/Assignment");
+const Submission = require("../models/Submission");
 
 /* =====================================================
    👥 Get all registered users (Exclude admins)
@@ -101,6 +102,32 @@ exports.getStudentClassesAdmin = async (req, res) => {
     res.status(200).json({ classes });
   } catch (err) {
     console.error("Get student classes error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getStudentSubmissionsAdmin = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const submissions = await Submission.find({ student: studentId })
+      .populate({
+        path: "assignment",
+        select: "title dueDate",
+        populate: {
+          path: "class",
+          select: "name subject",
+          populate: {
+            path: "teacher",
+            select: "name email",
+          },
+        },
+      })
+      .sort({ submittedAt: -1 });
+
+    res.status(200).json({ submissions });
+  } catch (err) {
+    console.error("Get student submissions error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
