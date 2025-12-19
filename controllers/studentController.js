@@ -117,49 +117,45 @@ exports.submitAssignment = async (req, res) => {
   }
 };
 
-/* Unsend assignment (delete submission) */
+/* 🗑️ Unsend Submission (before due date) */
 exports.unsendSubmission = async (req, res) => {
   try {
     const { classId, assignmentId } = req.params;
 
-    // Find class
+    // Check class
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
     if (!cls.students.includes(req.user._id))
       return res.status(403).json({ message: "Access denied" });
 
-    // Find assignment
+    // Check assignment
     const assignment = await Assignment.findById(assignmentId);
     if (!assignment) return res.status(404).json({ message: "Assignment not found" });
 
     // Check due date
-    if (assignment.dueDate && new Date() > new Date(assignment.dueDate)) {
+    if (assignment.dueDate && new Date() > new Date(assignment.dueDate))
       return res.status(400).json({ message: "Cannot unsend after due date" });
-    }
 
     // Find submission
     const submission = await Submission.findOne({
       assignment: assignmentId,
       student: req.user._id,
     });
+    if (!submission) return res.status(400).json({ message: "No submission found" });
 
-    if (!submission)
-      return res.status(400).json({ message: "No submission found to unsend" });
-
-    // Delete file from server if exists
+    // Delete uploaded file if exists
     if (submission.file) {
       const fs = require("fs");
-      if (fs.existsSync(submission.file)) {
-        fs.unlinkSync(submission.file);
-      }
+      const path = submission.file; // this should be the full path like "uploads/submissions/xyz.docx"
+      if (fs.existsSync(path)) fs.unlinkSync(path);
     }
 
-    // Delete submission from DB
-    await submission.deleteOne();
+    // Remove submission document
+    await Submission.deleteOne({ _id: submission._id });
 
     res.json({ message: "Submission unsent successfully" });
   } catch (err) {
-    console.error("Unsend submission error:", err);
+    console.error("Error unsending submission:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
