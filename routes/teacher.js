@@ -1,10 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/cloudinaryUpload");
+const { assignments, materials } = require("../middleware/cloudinaryUpload");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
-const { uploadMaterial, getMaterialsForClass } = require("../controllers/materialController");
-
 
 // Controllers
 const {
@@ -20,6 +18,11 @@ const {
   getAssignmentsByClass,
   getSubmissionsByAssignment,
 } = require("../controllers/assignmentController");
+
+const {
+  uploadMaterial,
+  getMaterialsForClass,
+} = require("../controllers/materialController");
 
 // --------------------
 // Classes
@@ -41,7 +44,7 @@ router.post(
   "/classes/:classId/assignments",
   auth,
   role("teacher"),
-  upload.single("file"),
+  assignments.single("file"), // uses Cloudinary assignments storage
   createAssignment
 );
 
@@ -66,7 +69,7 @@ router.post(
   "/classes/:id/material",
   auth,
   role("teacher"),
-  upload.single("file"),
+  materials.single("file"), // uses Cloudinary materials storage
   uploadMaterial
 );
 

@@ -4,7 +4,6 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
-
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -37,16 +36,14 @@ app.use(cors({ origin: "*", allowedHeaders: ["Content-Type", "Authorization"] })
 app.use(express.json());
 
 /* =========================
-   🔥 UPLOADS (FIXED)
+   🔥 UPLOADS
 ========================= */
 const uploadsPath = path.join(__dirname, "uploads");
-
 ["assignments", "submissions", "materials"].forEach((dir) => {
   const full = path.join(uploadsPath, dir);
   if (!fs.existsSync(full)) fs.mkdirSync(full, { recursive: true });
 });
-
-app.use("/uploads", express.static(uploadsPath));
+app.use("/uploads", express.static(uploadsPath)); // serve files
 
 /* =========================
    DATABASE
