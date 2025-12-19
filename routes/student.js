@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
+const upload = require("../middleware/cloudinaryUpload");
 const { uploadSubmission } = require("../middleware/uploads");
 
 const {
@@ -19,7 +20,7 @@ router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
 router.post(
   "/classes/:classId/assignments/:assignmentId/submit",
   protect,
-  uploadSubmission.single("file"),
+  upload.single("file"),
   submitAssignment
 );
 

@@ -97,7 +97,7 @@ exports.submitAssignment = async (req, res) => {
     const existing = await Submission.findOne({ assignment: assignmentId, student: req.user._id });
     if (existing) return res.status(400).json({ message: "Assignment already submitted" });
 
-    const fileUrl = req.file ? `/uploads/submissions/${req.file.filename}` : null;
+    const fileUrl = req.file ? req.file.path : null;
     const { answerText } = req.body;
 
     console.log("File uploaded:", req.file);

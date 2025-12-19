@@ -34,8 +34,7 @@ const createAssignment = async (req, res) => {
     instructions: req.body.instructions,
     dueDate: req.body.dueDate,
     attachment: req.file
-      ? `/uploads/assignments/${req.file.filename}`
-      : null,
+      ? req.file.path : null,
   });
 
   res.status(201).json(assignment);

@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-
+const upload = require("../middleware/cloudinaryUpload");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 const { uploadAssignment } = require("../middleware/uploads");
@@ -18,6 +18,8 @@ const {
   getAssignmentsByClass,
   getSubmissionsByAssignment,
 } = require("../controllers/assignmentController");
+const authMiddleware = require("../middleware/authMiddleware");
+const roleMiddleware = require("../middleware/role");
 
 /* Classes */
 router.post("/classes", auth, role("teacher"), createClass);
@@ -30,9 +32,9 @@ router.post("/classes/:id/announcement", auth, role("teacher"), createAnnounceme
 /* Assignments */
 router.post(
   "/classes/:classId/assignments",
-  auth,
-  role("teacher"),
-  uploadAssignment.single("file"),
+  authMiddleware,
+  roleMiddleware("teacher"),
+  upload.single("file"),
   createAssignment
 );
 
