@@ -13,7 +13,7 @@ const {
   getClassByIdAdmin,
   getStudentSubmissionsAdmin,
   getAssignmentSubmissionsAdmin,
-   getTeacherClassesAdmin,
+  getTeacherClassesAdmin,
   getClassByIdTeacherAdmin
 } = require("../controllers/adminController");
 
@@ -23,29 +23,6 @@ const {
 router.get("/users", authMiddleware, roleMiddleware("admin"), getAllUsers);
 router.get("/users/:id", authMiddleware, roleMiddleware("admin"), getUserDetails);
 router.delete("/users/:id", authMiddleware, roleMiddleware("admin"), deleteUserByAdmin);
-
-/* =====================================================
-   👨‍🏫 Teacher classes (ADMIN)
-===================================================== */
-router.get(
-  "/teachers/:id/classes",
-  authMiddleware,
-  roleMiddleware("admin"),
-  async (req, res) => {
-    try {
-      const teacherId = req.params.id;
-
-      const classes = await Class.find({ teacher: teacherId })
-        .populate("students", "name email")
-        .sort({ createdAt: -1 });
-
-      res.status(200).json({ classes });
-    } catch (err) {
-      console.error("Admin get teacher classes error:", err);
-      res.status(500).json({ message: "Server error" });
-    }
-  }
-);
 
 /* =====================================================
    🎓 Student joined classes (ADMIN)
@@ -84,7 +61,9 @@ router.get(
   getClassByIdAdmin
 );
 
-// Teacher Classes (ADMIN)
+/* =====================================================
+   👨‍🏫 Teacher classes (ADMIN)
+===================================================== */
 router.get(
   "/teachers/:id/classes",
   authMiddleware,
@@ -92,7 +71,9 @@ router.get(
   getTeacherClassesAdmin
 );
 
-// Single class (teacher's class) full details
+/* =====================================================
+   🏫 Single class (teacher's class) full details
+===================================================== */
 router.get(
   "/teachers/classes/:classId",
   authMiddleware,
@@ -100,7 +81,9 @@ router.get(
   getClassByIdTeacherAdmin
 );
 
-// Assignment submissions of teacher's class (reuse existing)
+/* =====================================================
+   📝 Assignment submissions of teacher's class (reuse existing)
+===================================================== */
 router.get(
   "/teachers/classes/:classId/assignments/:assignmentId/submissions",
   authMiddleware,
