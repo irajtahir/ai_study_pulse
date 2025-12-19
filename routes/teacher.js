@@ -1,6 +1,6 @@
+const upload = require("../middleware/cloudinaryUpload");
 const express = require("express");
 const router = express.Router();
-const upload = require("../middleware/cloudinaryUpload");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 const { uploadAssignment } = require("../middleware/uploads");
