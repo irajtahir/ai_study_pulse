@@ -58,16 +58,20 @@ exports.getStudentClasses = async (req, res) => {
 exports.getClassById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const cls = await Class.findById(id)
       .populate("teacher", "name email")
+      .populate("students", "name email") // ✅ IMPORTANT FIX
       .lean();
 
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    // Fetch related data
     const [assignments, announcements, materials] = await Promise.all([
       Assignment.find({ class: id }).sort({ createdAt: -1 }).lean(),
-      Announcement.find({ class: id }).sort({ createdAt: -1 }).populate("teacher", "name email").lean(),
+      Announcement.find({ class: id })
+        .sort({ createdAt: -1 })
+        .populate("teacher", "name email")
+        .lean(),
       Material.find({ class: id }).sort({ createdAt: -1 }).lean(),
     ]);
 
@@ -82,6 +86,7 @@ exports.getClassById = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 /* Create announcement */
 exports.createAnnouncement = async (req, res) => {
