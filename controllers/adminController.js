@@ -137,13 +137,10 @@ exports.getStudentSubmissionsAdmin = async (req, res) => {
 ===================================================== */
 exports.getAssignmentSubmissionsAdmin = async (req, res) => {
   try {
-    const assignmentId = req.params.assignmentId;
+    const { assignmentId } = req.params;
 
     const submissions = await Submission.find({ assignment: assignmentId })
-      .populate({
-        path: "student",
-        select: "name email",
-      })
+      .populate("student", "name email")
       .sort({ createdAt: -1 });
 
     res.status(200).json({ submissions });
@@ -152,6 +149,7 @@ exports.getAssignmentSubmissionsAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 /* =====================================================
