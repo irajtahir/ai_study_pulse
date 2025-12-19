@@ -1,67 +1,62 @@
 const express = require("express");
 const router = express.Router();
 
-const authMiddleware = require("../middleware/authMiddleware");
-const roleMiddleware = require("../middleware/roleMiddleware");
-const upload = require("../middleware/upload");
+const auth = require("../middleware/authMiddleware");
+const role = require("../middleware/roleMiddleware");
+const { uploadAssignment } = require("../middleware/uploads");
 
 const {
   createClass,
   getTeacherClasses,
-  joinClass,
-  getStudentClasses,
   getClassById,
   createAnnouncement,
   uploadMaterial,
-  getAssignmentSubmissions
 } = require("../controllers/teacherController");
 
 const {
   createAssignment,
   getAssignmentsByClass,
-  getSubmissionsByAssignment
+  getSubmissionsByAssignment,
 } = require("../controllers/assignmentController");
 
-/* 👨‍🏫 Teacher Classes */
-router.post("/classes", authMiddleware, roleMiddleware("teacher"), createClass);
-router.get("/classes", authMiddleware, roleMiddleware("teacher"), getTeacherClasses);
-router.get("/classes/:id", authMiddleware, getClassById);
+/* Classes */
+router.post("/classes", auth, role("teacher"), createClass);
+router.get("/classes", auth, role("teacher"), getTeacherClasses);
+router.get("/classes/:id", auth, getClassById);
 
-/* 🎓 Announcements */
-router.post("/classes/:id/announcement", authMiddleware, roleMiddleware("teacher"), createAnnouncement);
+/* Announcements */
+router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
 
-/* 📝 Assignments */
-router.post("/classes/:classId/assignments", authMiddleware, roleMiddleware("teacher"), upload.single("file"), createAssignment);
+/* Assignments */
+router.post(
+  "/classes/:classId/assignments",
+  auth,
+  role("teacher"),
+  uploadAssignment.single("file"),
+  createAssignment
+);
 
-router.get("/classes/:classId/assignments", authMiddleware, roleMiddleware("teacher"),getAssignmentsByClass);
+router.get(
+  "/classes/:classId/assignments",
+  auth,
+  role("teacher"),
+  getAssignmentsByClass
+);
 
 router.get(
   "/classes/:classId/assignments/:assignmentId/submissions",
-  authMiddleware,
-  roleMiddleware("teacher"),
+  auth,
+  role("teacher"),
   getSubmissionsByAssignment
 );
 
-/* 📥 Assignment Submissions */
-router.get(
-  "/assignments/:assignmentId/submissions",
-  authMiddleware,
-  roleMiddleware("teacher"),
-  getAssignmentSubmissions
-);
-
-
-/* 📄 Upload Material */
+/* Materials */
 router.post(
   "/classes/:id/material",
-  authMiddleware,
-  roleMiddleware("teacher"),
-  upload.single("file"),   
-  uploadMaterial            
+  auth,
+  role("teacher"),
+  uploadAssignment.single("file"),
+  uploadMaterial
 );
-
-/* 🎓 Student */
-router.post("/join", authMiddleware, roleMiddleware("student"), joinClass);
-router.get("/my-classes", authMiddleware, roleMiddleware("student"), getStudentClasses);
 
 module.exports = router;

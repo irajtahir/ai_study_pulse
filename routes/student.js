@@ -1,33 +1,26 @@
 const express = require("express");
 const router = express.Router();
 const { protect } = require("../middleware/auth");
-const multer = require("multer");
-const fs = require("fs");
-const { getStudentClasses, joinClass, getAssignmentsForClass, submitAssignment, getStudentClassDetails } = require("../controllers/studentController");
+const { uploadSubmission } = require("../middleware/uploads");
+
+const {
+  getStudentClasses,
+  joinClass,
+  getAssignmentsForClass,
+  submitAssignment,
+  getStudentClassDetails,
+} = require("../controllers/studentController");
 
 router.get("/classes", protect, getStudentClasses);
 router.post("/classes/join", protect, joinClass);
-
-// Upload config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = "uploads/submissions";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  }
-});
-const upload = multer({ storage });
-
-// Class details
 router.get("/classes/:classId", protect, getStudentClassDetails);
-
-// Get assignments
 router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
 
-// Submit assignment
-router.post("/classes/:classId/assignments/:assignmentId/submit", protect, upload.single("file"), submitAssignment);
+router.post(
+  "/classes/:classId/assignments/:assignmentId/submit",
+  protect,
+  uploadSubmission.single("file"),
+  submitAssignment
+);
 
 module.exports = router;
