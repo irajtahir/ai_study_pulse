@@ -206,7 +206,7 @@ exports.uploadMaterial = async (req, res) => {
     if (cls.teacher.toString() !== req.user._id.toString())
       return res.status(403).json({ message: "Only teacher can upload materials" });
 
-    let fileUrl = req.file ? `/uploads/materials/${req.file.filename}` : null;
+    let fileUrl = req.file ?.path|| null;
 
     // Create Material document
     const material = await Material.create({
