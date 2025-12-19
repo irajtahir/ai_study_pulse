@@ -130,53 +130,33 @@ exports.getAnnouncementsForClass = async (req, res) => {
   }
 };
 
-
-
-
-
-
-/* 📝 Create Assignment (Teacher only) */
 exports.createAssignment = async (req, res) => {
   try {
     const { title, description, dueDate } = req.body;
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
-    if (!title || !description) {
-      return res.status(400).json({ message: "Title & description are required" });
-    }
+    const fileUrl = req.file ? req.file.path : null; // ✅ Cloudinary URL
 
     const cls = await Class.findById(req.params.classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-    if (cls.teacher.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: "Only teacher can create assignments" });
 
-    const newAssignment = await Assignment.create({
+    const assignment = await Assignment.create({
       class: cls._id,
       title,
       description,
       dueDate,
-      fileUrl
+      fileUrl,
     });
 
-    cls.assignments.push(newAssignment._id);
+    cls.assignments.push(assignment._id);
     await cls.save();
 
-    // Emit notification to all students in class
-    const io = req.app.locals.io;
-    cls.students.forEach(studentId => {
-      io.to(studentId.toString()).emit("newNotification", {
-        type: "assignment",
-        message: `New assignment in ${cls.name}: "${title}"`,
-        assignmentId: newAssignment._id
-      });
-    });
-
-    res.status(201).json({ message: "Assignment created successfully", assignment: newAssignment });
+    res.status(201).json({ message: "Assignment created", assignment });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 const Submission = require("../models/Submission");
 
@@ -189,48 +169,6 @@ exports.getAssignmentSubmissions = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json(submissions);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-exports.uploadMaterial = async (req, res) => {
-  try {
-    const { title, content } = req.body;
-    if (!title?.trim()) return res.status(400).json({ message: "Material title required" });
-
-    const cls = await Class.findById(req.params.id);
-    if (!cls) return res.status(404).json({ message: "Class not found" });
-    if (cls.teacher.toString() !== req.user._id.toString())
-      return res.status(403).json({ message: "Only teacher can upload materials" });
-
-    let fileUrl = req.file ?.path|| null;
-
-    // Create Material document
-    const material = await Material.create({
-      class: cls._id,
-      teacher: req.user._id,
-      title,
-      content,
-      fileUrl
-    });
-
-    // Add reference to class
-    cls.materials.push(material._id);
-    await cls.save();
-
-    // Emit notification to students
-    const io = req.app.locals.io;
-    cls.students.forEach(studentId => {
-      io.to(studentId.toString()).emit("newNotification", {
-        type: "material",
-        message: `New material uploaded in ${cls.name}: "${title}"`
-      });
-    });
-
-    res.status(201).json({ message: "Material uploaded successfully", material });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

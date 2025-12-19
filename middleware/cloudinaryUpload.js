@@ -1,11 +1,7 @@
-// backend/middleware/cloudinaryUpload.js
 const multer = require("multer");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const cloudinary = require("../config/cloudinary");
 
-/**
- * Multer storage for assignments & submissions
- */
 const assignmentsStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => ({
@@ -15,9 +11,6 @@ const assignmentsStorage = new CloudinaryStorage({
   }),
 });
 
-/**
- * Multer storage for class materials
- */
 const materialsStorage = new CloudinaryStorage({
   cloudinary,
   params: async (req, file) => ({
@@ -27,8 +20,7 @@ const materialsStorage = new CloudinaryStorage({
   }),
 });
 
-// Multer instances
-const assignments = multer({ storage: assignmentsStorage });
-const materials = multer({ storage: materialsStorage });
-
-module.exports = { assignments, materials };
+module.exports = {
+  assignments: multer({ storage: assignmentsStorage }),
+  materials: multer({ storage: materialsStorage }),
+};

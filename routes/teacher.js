@@ -76,7 +76,6 @@ router.post(
 router.get(
   "/classes/:id/materials",
   auth,
-  role("teacher"),
   getMaterialsForClass
 );
 

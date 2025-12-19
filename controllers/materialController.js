@@ -48,12 +48,10 @@ exports.uploadMaterial = async (req, res) => {
 /* Student: Get materials for a class */
 exports.getMaterialsForClass = async (req, res) => {
   try {
-    const classId = req.params.classId;
+    const classId = req.params.id; // ✅ FIXED
+
     const cls = await Class.findById(classId);
     if (!cls) return res.status(404).json({ message: "Class not found" });
-
-    if (!cls.students.includes(req.user._id))
-      return res.status(403).json({ message: "Access denied" });
 
     const materials = await Material.find({ class: classId })
       .sort({ createdAt: -1 })
@@ -65,3 +63,4 @@ exports.getMaterialsForClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
