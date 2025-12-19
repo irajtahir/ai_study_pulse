@@ -14,6 +14,11 @@ const {
   getClassDashboard
 } = require("../controllers/studentController");
 
+const { getAnnouncementsForClass } = require("../controllers/announcementController");
+
+const { getMaterialsForClass } = require("../controllers/materialController");
+
+
 // Upload config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -33,6 +38,8 @@ router.post("/classes/join", protect, joinClass);
 router.get("/classes/:classId", protect, getStudentClassDetails);
 router.get("/classes/:classId/dashboard", protect, getClassDashboard);
 router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
+router.get("/classes/:classId/announcements", protect, getAnnouncementsForClass);
+router.get("/classes/:classId/materials", protect, getMaterialsForClass);
 router.post("/classes/:classId/assignments/:assignmentId/submit", protect, upload.single("file"), submitAssignment);
 router.delete("/classes/:classId/assignments/:assignmentId/unsend", protect, unsendSubmission);
 

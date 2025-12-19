@@ -1,9 +1,8 @@
-const Class = require("../models/Class");
-const Submission = require("../models/Submission");
-const Assignment = require("../models/Assignment");
-const fs = require("fs");
-const Announcement = require("../models/Announcement");
 const Material = require("../models/Material");
+const Announcement = require("../models/Announcement");
+const Assignment = require("../models/Assignment");
+const Submission = require("../models/Submission");
+const Class = require("../models/Class");
 
 /* 📖 Get Student Joined Classes */
 exports.getStudentClasses = async (req, res) => {
@@ -51,45 +50,33 @@ exports.getStudentClassDetails = async (req, res) => {
   }
 };
 
+// GET Student Class Dashboard
 exports.getClassDashboard = async (req, res) => {
   try {
-    const classId = req.params.classId;
+    const { classId } = req.params;
     const cls = await Class.findById(classId).populate("teacher", "name email");
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    if (!cls.students.includes(req.user._id)) {
+    // Check student
+    if (!cls.students.includes(req.user._id))
       return res.status(403).json({ message: "Access denied" });
-    }
 
-    // Assignments with submission info
-    const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
-    const assignmentsWithSubmission = await Promise.all(
-      assignments.map(async (a) => {
-        const submission = await Submission.findOne({ assignment: a._id, student: req.user._id });
-        return {
-          ...a.toObject(),
-          submitted: !!submission,
-          submission: submission ? submission.toObject() : null,
-        };
-      })
-    );
+    // Fetch data
+    const [assignments, announcements, materials] = await Promise.all([
+      Assignment.find({ class: classId }).sort({ createdAt: -1 }),
+      Announcement.find({ class: classId }).sort({ createdAt: -1 }),
+      Material.find({ class: classId }).sort({ createdAt: -1 }),
+    ]);
 
-    // Announcements
-    const announcements = await Announcement.find({ class: classId })
-      .sort({ createdAt: -1 })
-      .populate("teacher", "name");
+    // Map student submissions
+    const submissions = await Submission.find({ student: req.user._id, assignment: { $in: assignments.map(a => a._id) } });
 
-    // Materials
-    const materials = await Material.find({ class: classId })
-      .sort({ createdAt: -1 })
-      .populate("teacher", "name");
-
-    res.json({
-      classInfo: cls,
-      assignments: assignmentsWithSubmission,
-      announcements,
-      materials,
+    const assignmentsWithSubmission = assignments.map(a => {
+      const submission = submissions.find(s => s.assignment.toString() === a._id.toString());
+      return { ...a.toObject(), submitted: !!submission, submission: submission ? submission.toObject() : null };
     });
+
+    res.json({ class: cls, assignments: assignmentsWithSubmission, announcements, materials });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
