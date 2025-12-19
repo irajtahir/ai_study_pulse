@@ -62,8 +62,11 @@ router.get(
   getStudentSubmissionsAdmin
 );
 
+/* =====================================================
+   📝 Assignment submissions (ADMIN)
+===================================================== */
 router.get(
-  "/assignments/:assignmentId/submissions",
+  "/assignment/:assignmentId/submissions",
   authMiddleware,
   roleMiddleware("admin"),
   getAssignmentSubmissionsAdmin

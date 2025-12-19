@@ -31,22 +31,14 @@ exports.getUserDetails = async (req, res) => {
     const userId = req.params.id;
 
     const user = await User.findById(userId).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const activities = await Activity.find({ user: userId }).sort({ createdAt: -1 });
     const quizzes = await Quiz.find({ user: userId }).sort({ createdAt: -1 });
     const notes = await Note.find({ user: userId }).sort({ createdAt: -1 });
     const aiInsights = await AIInsight.find({ user: userId }).sort({ createdAt: -1 });
 
-    res.status(200).json({
-      user,
-      activities,
-      quizzes,
-      notes,
-      aiInsights,
-    });
+    res.status(200).json({ user, activities, quizzes, notes, aiInsights });
   } catch (err) {
     console.error("User details error:", err);
     res.status(500).json({ message: "Server error" });
@@ -61,27 +53,19 @@ exports.deleteUserByAdmin = async (req, res) => {
     const userId = req.params.id;
 
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    // ❌ Admin cannot delete himself
     if (user._id.toString() === req.user._id.toString()) {
-      return res.status(400).json({
-        message: "Admin cannot delete himself",
-      });
+      return res.status(400).json({ message: "Admin cannot delete himself" });
     }
 
     await Activity.deleteMany({ user: userId });
     await Quiz.deleteMany({ user: userId });
     await Note.deleteMany({ user: userId });
     await AIInsight.deleteMany({ user: userId });
-
     await User.findByIdAndDelete(userId);
 
-    res.status(200).json({
-      message: "User and all related data deleted successfully",
-    });
+    res.status(200).json({ message: "User and all related data deleted successfully" });
   } catch (err) {
     console.error("Delete user error:", err);
     res.status(500).json({ message: "Server error" });
@@ -106,6 +90,9 @@ exports.getStudentClassesAdmin = async (req, res) => {
   }
 };
 
+/* =====================================================
+   🎓 Get all submissions of a student (ADMIN)
+===================================================== */
 exports.getStudentSubmissionsAdmin = async (req, res) => {
   try {
     const studentId = req.params.id;
@@ -117,11 +104,8 @@ exports.getStudentSubmissionsAdmin = async (req, res) => {
         populate: {
           path: "class",
           select: "name subject",
-          populate: {
-            path: "teacher",
-            select: "name email",
-          },
-        },
+          populate: { path: "teacher", select: "name email" }
+        }
       })
       .sort({ submittedAt: -1 });
 
@@ -150,8 +134,6 @@ exports.getAssignmentSubmissionsAdmin = async (req, res) => {
   }
 };
 
-
-
 /* =====================================================
    🏫 Get single class FULL details (ADMIN)
 ===================================================== */
@@ -164,12 +146,9 @@ exports.getClassByIdAdmin = async (req, res) => {
       .populate("students", "name email")
       .populate("materials");
 
-    if (!cls) {
-      return res.status(404).json({ message: "Class not found" });
-    }
+    if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    const assignments = await Assignment.find({ class: classId })
-      .sort({ createdAt: -1 });
+    const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
 
     res.status(200).json({
       _id: cls._id,
