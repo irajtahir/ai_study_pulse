@@ -1,8 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/auth");
-const multer = require("multer");
-const fs = require("fs");
+const auth = require("../middleware/authMiddleware");
 
 const {
   getStudentClasses,
@@ -11,36 +9,18 @@ const {
   submitAssignment,
   getStudentClassDetails,
   unsendSubmission,
-  getClassDashboard
+  getClassDashboard,
 } = require("../controllers/studentController");
 
 const { getAnnouncementsForClass } = require("../controllers/announcementController");
-
 const { getMaterialsForClass } = require("../controllers/materialController");
 
-
-// Upload config
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const dir = "uploads/submissions";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  }
-});
-const upload = multer({ storage });
-
-// Routes
-router.get("/classes", protect, getStudentClasses);
-router.post("/classes/join", protect, joinClass);
-router.get("/classes/:classId", protect, getStudentClassDetails);
-router.get("/classes/:classId/dashboard", protect, getClassDashboard);
-router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
-router.get("/classes/:classId/announcements", protect, getAnnouncementsForClass);
-router.get("/classes/:classId/materials", protect, getMaterialsForClass);
-router.post("/classes/:classId/assignments/:assignmentId/submit", protect, upload.single("file"), submitAssignment);
-router.delete("/classes/:classId/assignments/:assignmentId/unsend", protect, unsendSubmission);
+router.get("/classes", auth, getStudentClasses);
+router.post("/classes/join", auth, joinClass);
+router.get("/classes/:classId", auth, getStudentClassDetails);
+router.get("/classes/:classId/dashboard", auth, getClassDashboard);
+router.get("/classes/:classId/assignments", auth, getAssignmentsForClass);
+router.get("/classes/:classId/announcements", auth, getAnnouncementsForClass);
+router.get("/classes/:classId/materials", auth, getMaterialsForClass);
 
 module.exports = router;

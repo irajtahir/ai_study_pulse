@@ -4,7 +4,6 @@ const { assignments, materials } = require("../middleware/cloudinaryUpload");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
 
-// Controllers
 const {
   createClass,
   getTeacherClasses,
@@ -24,59 +23,36 @@ const {
   getMaterialsForClass,
 } = require("../controllers/materialController");
 
-// --------------------
-// Classes
-// --------------------
 router.post("/classes", auth, role("teacher"), createClass);
 router.get("/classes", auth, role("teacher"), getTeacherClasses);
 router.get("/classes/:id", auth, getClassById);
 
-// --------------------
-// Announcements
-// --------------------
 router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
-router.get("/classes/:id/announcements", auth, role("teacher"), getAnnouncementsForClass);
+router.get("/classes/:id/announcements", auth, getAnnouncementsForClass);
 
-// --------------------
-// Assignments
-// --------------------
 router.post(
   "/classes/:classId/assignments",
   auth,
   role("teacher"),
-  assignments.single("file"), // uses Cloudinary assignments storage
+  assignments.single("file"),
   createAssignment
 );
 
-router.get(
-  "/classes/:classId/assignments",
-  auth,
-  role("teacher"),
-  getAssignmentsByClass
-);
-
+router.get("/classes/:classId/assignments", auth, getAssignmentsByClass);
 router.get(
   "/classes/:classId/assignments/:assignmentId/submissions",
   auth,
-  role("teacher"),
   getSubmissionsByAssignment
 );
 
-// --------------------
-// Materials
-// --------------------
 router.post(
   "/classes/:id/material",
   auth,
   role("teacher"),
-  materials.single("file"), // uses Cloudinary materials storage
+  materials.single("file"),
   uploadMaterial
 );
 
-router.get(
-  "/classes/:id/materials",
-  auth,
-  getMaterialsForClass
-);
+router.get("/classes/:id/materials", auth, getMaterialsForClass);
 
 module.exports = router;
