@@ -6,6 +6,9 @@ const AIInsight = require("../models/AIInsight");
 const Class = require("../models/Class");
 const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
+const Announcement = require("../models/Announcement");
+const Material = require("../models/Material");
+
 
 /* =====================================================
    👥 Get all registered users (Exclude admins)
