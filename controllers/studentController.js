@@ -2,6 +2,8 @@ const Class = require("../models/Class");
 const Submission = require("../models/Submission");
 const Assignment = require("../models/Assignment");
 const fs = require("fs");
+const Announcement = require("../models/Announcement");
+const Material = require("../models/Material");
 
 /* 📖 Get Student Joined Classes */
 exports.getStudentClasses = async (req, res) => {
@@ -48,6 +50,52 @@ exports.getStudentClassDetails = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.getClassDashboard = async (req, res) => {
+  try {
+    const classId = req.params.classId;
+    const cls = await Class.findById(classId).populate("teacher", "name email");
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    if (!cls.students.includes(req.user._id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // Assignments with submission info
+    const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
+    const assignmentsWithSubmission = await Promise.all(
+      assignments.map(async (a) => {
+        const submission = await Submission.findOne({ assignment: a._id, student: req.user._id });
+        return {
+          ...a.toObject(),
+          submitted: !!submission,
+          submission: submission ? submission.toObject() : null,
+        };
+      })
+    );
+
+    // Announcements
+    const announcements = await Announcement.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .populate("teacher", "name");
+
+    // Materials
+    const materials = await Material.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .populate("teacher", "name");
+
+    res.json({
+      classInfo: cls,
+      assignments: assignmentsWithSubmission,
+      announcements,
+      materials,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 /* Get assignments for a class along with submission status */
 exports.getAssignmentsForClass = async (req, res) => {

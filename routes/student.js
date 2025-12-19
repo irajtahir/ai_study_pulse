@@ -10,7 +10,8 @@ const {
   getAssignmentsForClass,
   submitAssignment,
   getStudentClassDetails,
-  unsendSubmission
+  unsendSubmission,
+  getClassDashboard
 } = require("../controllers/studentController");
 
 // Upload config
@@ -30,6 +31,7 @@ const upload = multer({ storage });
 router.get("/classes", protect, getStudentClasses);
 router.post("/classes/join", protect, joinClass);
 router.get("/classes/:classId", protect, getStudentClassDetails);
+router.get("/classes/:classId/dashboard", protect, getClassDashboard);
 router.get("/classes/:classId/assignments", protect, getAssignmentsForClass);
 router.post("/classes/:classId/assignments/:assignmentId/submit", protect, upload.single("file"), submitAssignment);
 router.delete("/classes/:classId/assignments/:assignmentId/unsend", protect, unsendSubmission);
