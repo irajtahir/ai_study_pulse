@@ -3,13 +3,14 @@ const router = express.Router();
 const upload = require("../middleware/cloudinaryUpload");
 const auth = require("../middleware/authMiddleware");
 const role = require("../middleware/roleMiddleware");
+const { uploadMaterial, getMaterialsForClass } = require("../controllers/materialController");
+
 
 // Controllers
 const {
   createClass,
   getTeacherClasses,
   getClassById,
-  uploadMaterial,
   createAnnouncement,
   getAnnouncementsForClass,
 } = require("../controllers/teacherController");
@@ -67,6 +68,13 @@ router.post(
   role("teacher"),
   upload.single("file"),
   uploadMaterial
+);
+
+router.get(
+  "/classes/:id/materials",
+  auth,
+  role("teacher"),
+  getMaterialsForClass
 );
 
 module.exports = router;
