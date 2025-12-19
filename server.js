@@ -1,17 +1,20 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const path = require('path');
+// server.js
+require("dotenv").config();
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
+
 const http = require("http");
 const { Server } = require("socket.io");
 
-// Import routes
-const authRoutes = require('./routes/auth');
-const activitiesRoutes = require('./routes/activities');
-const quizzesRoutes = require('./routes/quizzes');
-const chatRoutes = require('./routes/chat');
-const notesRoutes = require('./routes/notes'); 
+// Routes
+const authRoutes = require("./routes/auth");
+const activitiesRoutes = require("./routes/activities");
+const quizzesRoutes = require("./routes/quizzes");
+const chatRoutes = require("./routes/chat");
+const notesRoutes = require("./routes/notes");
 const adminAuthRoutes = require("./routes/adminAuth");
 const adminRoutes = require("./routes/admin");
 const teacherRoutes = require("./routes/teacher");
@@ -19,76 +22,102 @@ const studentRoutes = require("./routes/student");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
-
-// Store online users
-const onlineUsers = {};
-io.on("connection", (socket) => {
-    console.log("A user connected", socket.id);
-    socket.on("joinUserRoom", (userId) => {
-        socket.join(userId);
-        onlineUsers[userId] = socket.id;
-    });
-    socket.on("disconnect", () => {
-        for (let key in onlineUsers) if (onlineUsers[key] === socket.id) delete onlineUsers[key];
-        console.log("User disconnected", socket.id);
-    });
+const io = new Server(server, {
+  cors: { origin: "*" }
 });
 
-// JSON parse
-app.use(express.json());
+/* =========================
+   SOCKET.IO
+========================= */
+const onlineUsers = {};
 
-// CORS
+io.on("connection", (socket) => {
+  socket.on("joinUserRoom", (userId) => {
+    socket.join(userId);
+    onlineUsers[userId] = socket.id;
+  });
+
+  socket.on("disconnect", () => {
+    for (let key in onlineUsers) {
+      if (onlineUsers[key] === socket.id) delete onlineUsers[key];
+    }
+  });
+});
+
+/* =========================
+   MIDDLEWARES
+========================= */
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
-// Serve uploads (submissions, materials, assignments)
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads/materials", express.static(path.join(__dirname, "uploads/materials")));
-app.use("/uploads/assignments", express.static(path.join(__dirname, "uploads/assignments")));
-app.use("/uploads/submissions", express.static(path.join(__dirname, "uploads/submissions")));
+app.use(express.json());
 
-// MongoDB connection
+/* =========================
+   🔥 CRITICAL FIX: UPLOADS
+========================= */
+// Absolute path (Railway-safe)
+const uploadsPath = path.join(__dirname, "uploads");
+
+// Ensure folders exist
+["assignments", "submissions", "materials"].forEach(dir => {
+  const fullPath = path.join(uploadsPath, dir);
+  if (!fs.existsSync(fullPath)) {
+    fs.mkdirSync(fullPath, { recursive: true });
+  }
+});
+
+// Serve uploads PUBLICLY
+app.use("/uploads", express.static(uploadsPath));
+
+/* =========================
+   DATABASE
+========================= */
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.error('MongoDB connection error:', err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
 
-// API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/activities', activitiesRoutes);
-app.use('/api/quizzes', quizzesRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/notes', notesRoutes);
+/* =========================
+   ROUTES
+========================= */
+app.use("/api/auth", authRoutes);
+app.use("/api/activities", activitiesRoutes);
+app.use("/api/quizzes", quizzesRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/notes", notesRoutes);
 app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/teacher", teacherRoutes);
 app.use("/api/student", studentRoutes);
 
-// Serve frontend
-if (process.env.NODE_ENV === 'production') {
-  const tryPaths = [
-    path.join(__dirname, '../frontend/dist'),
-    path.join(__dirname, '../frontend/build'),
-    path.join(__dirname, 'public')
-  ];
-  const frontendPath = tryPaths.find(p => {
-    try { return require('fs').statSync(p).isDirectory(); } 
-    catch { return false; }
-  });
-  if (frontendPath) {
+/* =========================
+   FRONTEND (PRODUCTION)
+========================= */
+if (process.env.NODE_ENV === "production") {
+  const frontendPath = path.join(__dirname, "../frontend/dist");
+  if (fs.existsSync(frontendPath)) {
     app.use(express.static(frontendPath));
-    app.get('*', (req, res) => res.sendFile(path.join(frontendPath, 'index.html')));
-  } else console.warn('Frontend build folder not found');
+    app.get("*", (req, res) =>
+      res.sendFile(path.join(frontendPath, "index.html"))
+    );
+  }
 }
 
-// Root
-app.get('/', (req, res) => res.send('API running...'));
+/* =========================
+   ROOT
+========================= */
+app.get("/", (req, res) => {
+  res.send("🚀 API is running...");
+});
 
-// Make io accessible
 app.locals.io = io;
 
+/* =========================
+   START SERVER
+========================= */
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);
