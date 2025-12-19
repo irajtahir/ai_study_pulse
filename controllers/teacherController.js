@@ -58,28 +58,20 @@ exports.getClassById = async (req, res) => {
 
     const cls = await Class.findById(id)
       .populate("teacher", "name email")
-      .lean(); // use lean() for plain JS objects
+      .populate("assignments")
+      .populate("announcements")
+      .populate("materials")
+      .lean();
 
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    // Fetch related data
-    const [assignments, announcements, materials] = await Promise.all([
-      Assignment.find({ class: id }).sort({ createdAt: -1 }).lean(),
-      Announcement.find({ class: id }).sort({ createdAt: -1 }).lean(),
-      Material.find({ class: id }).sort({ createdAt: -1 }).lean(),
-    ]);
-
-    res.json({
-      ...cls,
-      assignments: assignments || [],
-      announcements: announcements || [],
-      materials: materials || [],
-    });
+    res.json(cls);
   } catch (err) {
     console.error("getClassById error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 /* 📝 Create Announcement (Teacher only) with Notifications */
 exports.createAnnouncement = async (req, res) => {
