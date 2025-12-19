@@ -166,3 +166,56 @@ exports.getClassByIdAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* =====================================================
+   🎓 Get all classes created by a teacher (ADMIN)
+===================================================== */
+exports.getTeacherClassesAdmin = async (req, res) => {
+  try {
+    const teacherId = req.params.id;
+
+    const classes = await Class.find({ teacher: teacherId })
+      .populate("students", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({ classes });
+  } catch (err) {
+    console.error("Get teacher classes error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* =====================================================
+   🏫 Get single class FULL details for admin (teacher's class)
+===================================================== */
+exports.getClassByIdTeacherAdmin = async (req, res) => {
+  try {
+    const classId = req.params.classId;
+
+    const cls = await Class.findById(classId)
+      .populate("teacher", "name email")
+      .populate("students", "name email")
+      .lean();
+
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    const [assignments, announcements, materials] = await Promise.all([
+      Assignment.find({ class: classId }).sort({ createdAt: -1 }).lean(),
+      Announcement.find({ class: classId })
+        .sort({ createdAt: -1 })
+        .populate("teacher", "name email")
+        .lean(),
+      Material.find({ class: classId }).sort({ createdAt: -1 }).lean(),
+    ]);
+
+    res.status(200).json({
+      ...cls,
+      assignments,
+      announcements,
+      materials,
+    });
+  } catch (err) {
+    console.error("Get class by teacher admin error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

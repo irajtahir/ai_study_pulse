@@ -12,7 +12,9 @@ const {
   getStudentClassesAdmin,
   getClassByIdAdmin,
   getStudentSubmissionsAdmin,
-  getAssignmentSubmissionsAdmin
+  getAssignmentSubmissionsAdmin,
+   getTeacherClassesAdmin,
+  getClassByIdTeacherAdmin
 } = require("../controllers/adminController");
 
 /* =====================================================
@@ -80,6 +82,30 @@ router.get(
   authMiddleware,
   roleMiddleware("admin"),
   getClassByIdAdmin
+);
+
+// Teacher Classes (ADMIN)
+router.get(
+  "/teachers/:id/classes",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getTeacherClassesAdmin
+);
+
+// Single class (teacher's class) full details
+router.get(
+  "/teachers/classes/:classId",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getClassByIdTeacherAdmin
+);
+
+// Assignment submissions of teacher's class (reuse existing)
+router.get(
+  "/teachers/classes/:classId/assignments/:assignmentId/submissions",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getAssignmentSubmissionsAdmin
 );
 
 module.exports = router;
