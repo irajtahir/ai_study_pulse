@@ -4,6 +4,7 @@ const Quiz = require("../models/Quiz");
 const Note = require("../models/Note");
 const AIInsight = require("../models/AIInsight");
 const Class = require("../models/Class");
+const Assignment = require("../models/Assignment");
 
 /* =====================================================
    👥 Get all registered users (Exclude admins)
@@ -36,7 +37,6 @@ exports.getUserDetails = async (req, res) => {
     const activities = await Activity.find({ user: userId }).sort({ createdAt: -1 });
     const quizzes = await Quiz.find({ user: userId }).sort({ createdAt: -1 });
     const notes = await Note.find({ user: userId }).sort({ createdAt: -1 });
-
     const aiInsights = await AIInsight.find({ user: userId }).sort({ createdAt: -1 });
 
     res.status(200).json({
@@ -44,7 +44,7 @@ exports.getUserDetails = async (req, res) => {
       activities,
       quizzes,
       notes,
-      aiInsights
+      aiInsights,
     });
   } catch (err) {
     console.error("User details error:", err);
@@ -64,20 +64,18 @@ exports.deleteUserByAdmin = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // ❌ Safety: admin cannot delete himself
+    // ❌ Admin cannot delete himself
     if (user._id.toString() === req.user._id.toString()) {
       return res.status(400).json({
         message: "Admin cannot delete himself",
       });
     }
 
-    /* 🔥 Delete all related data first */
     await Activity.deleteMany({ user: userId });
     await Quiz.deleteMany({ user: userId });
     await Note.deleteMany({ user: userId });
     await AIInsight.deleteMany({ user: userId });
 
-    /* 🔥 Finally delete user */
     await User.findByIdAndDelete(userId);
 
     res.status(200).json({
@@ -89,23 +87,43 @@ exports.deleteUserByAdmin = async (req, res) => {
   }
 };
 
+/* =====================================================
+   🎓 Get classes joined by a student (ADMIN)
+===================================================== */
+exports.getStudentClassesAdmin = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+
+    const classes = await Class.find({ students: studentId })
+      .populate("teacher", "name email")
+      .select("name subject teacher createdAt");
+
+    res.status(200).json({ classes });
+  } catch (err) {
+    console.error("Get student classes error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* =====================================================
+   🏫 Get single class FULL details (ADMIN)
+===================================================== */
 exports.getClassByIdAdmin = async (req, res) => {
   try {
     const classId = req.params.id;
 
-    // Fetch class with teacher, students, and materials
     const cls = await Class.findById(classId)
       .populate("teacher", "name email")
       .populate("students", "name email")
       .populate("materials");
 
-    if (!cls) return res.status(404).json({ message: "Class not found" });
+    if (!cls) {
+      return res.status(404).json({ message: "Class not found" });
+    }
 
-    // Fetch assignments separately
-    const Assignment = require("../models/Assignment");
-    const assignments = await Assignment.find({ class: classId }).sort({ createdAt: -1 });
+    const assignments = await Assignment.find({ class: classId })
+      .sort({ createdAt: -1 });
 
-    // Return everything together
     res.status(200).json({
       _id: cls._id,
       name: cls.name,
@@ -115,7 +133,7 @@ exports.getClassByIdAdmin = async (req, res) => {
       students: cls.students,
       announcements: cls.announcements,
       materials: cls.materials,
-      assignments: assignments
+      assignments,
     });
   } catch (err) {
     console.error("Get class by admin error:", err);
