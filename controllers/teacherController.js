@@ -52,18 +52,30 @@ exports.getStudentClasses = async (req, res) => {
   } catch (err) { res.status(500).json({ message: "Server error" }); }
 };
 
-/* ✅ CLASS DETAILS (Teacher + Student BOTH) */
 exports.getClassById = async (req, res) => {
   try {
-    const cls = await Class.findById(req.params.id).populate("teacher", "name email").populate("students", "name email");
+    const cls = await Class.findById(req.params.id)
+      .populate("teacher", "name email");
+    
     if (!cls) return res.status(404).json({ message: "Class not found" });
 
-    const isTeacher = cls.teacher._id.toString() === req.user._id.toString();
-    const isStudent = cls.students.some(s => s._id.toString() === req.user._id.toString());
-    if (!isTeacher && !isStudent) return res.status(403).json({ message: "Access denied" });
+    // Fetch assignments, announcements, materials separately
+    const [assignments, announcements, materials] = await Promise.all([
+      Assignment.find({ class: cls._id }).sort({ createdAt: -1 }),
+      Announcement.find({ class: cls._id }).sort({ createdAt: -1 }),
+      Material.find({ class: cls._id }).sort({ createdAt: -1 })
+    ]);
 
-    res.json(cls);
-  } catch (err) { res.status(500).json({ message: "Server error" }); }
+    res.json({
+      ...cls.toObject(),
+      assignments,
+      announcements,
+      materials
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 /* 📝 Create Announcement (Teacher only) with Notifications */
