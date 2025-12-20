@@ -13,39 +13,15 @@ const {
   getAssignmentSubmissionsAdmin,
   getClassByIdAdmin,
   getTeacherClassesAdmin,
-  getClassByIdTeacherAdmin,
+  getClassByIdTeacherAdmin
 } = require("../controllers/adminController");
 
-/* =====================================================
-   👥 USERS (ADMIN)
-===================================================== */
+/* ================= USERS ================= */
 router.get("/users", authMiddleware, roleMiddleware("admin"), getAllUsers);
 router.get("/users/:id", authMiddleware, roleMiddleware("admin"), getUserDetails);
 router.delete("/users/:id", authMiddleware, roleMiddleware("admin"), deleteUserByAdmin);
 
-/* =====================================================
-   👨‍🏫 TEACHER → CLASSES (ADMIN)
-===================================================== */
-router.get(
-  "/teachers/:id/classes",
-  authMiddleware,
-  roleMiddleware("admin"),
-  getTeacherClassesAdmin
-);
-
-/* =====================================================
-   🏫 SINGLE TEACHER CLASS (ADMIN)
-===================================================== */
-router.get(
-  "/teachers/classes/:classId",
-  authMiddleware,
-  roleMiddleware("admin"),
-  getClassByIdTeacherAdmin
-);
-
-/* =====================================================
-   🎓 STUDENT → CLASSES (ADMIN)
-===================================================== */
+/* ================= STUDENT ================= */
 router.get(
   "/students/:id/classes",
   authMiddleware,
@@ -53,9 +29,6 @@ router.get(
   getStudentClassesAdmin
 );
 
-/* =====================================================
-   📄 STUDENT SUBMISSIONS (ADMIN)
-===================================================== */
 router.get(
   "/students/:id/submissions",
   authMiddleware,
@@ -63,9 +36,25 @@ router.get(
   getStudentSubmissionsAdmin
 );
 
-/* =====================================================
-   📝 ASSIGNMENT SUBMISSIONS (ADMIN)
-===================================================== */
+/* ================= TEACHER (ADMIN VIEW) ================= */
+
+// ✅ THIS IS THE ONLY TEACHER CLASSES ROUTE
+router.get(
+  "/teachers/:id/classes",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getTeacherClassesAdmin
+);
+
+// ✅ Single class full details (teacher class)
+router.get(
+  "/teacher/class/:classId",
+  authMiddleware,
+  roleMiddleware("admin"),
+  getClassByIdTeacherAdmin
+);
+
+/* ================= ASSIGNMENTS ================= */
 router.get(
   "/assignment/:assignmentId/submissions",
   authMiddleware,
@@ -73,9 +62,7 @@ router.get(
   getAssignmentSubmissionsAdmin
 );
 
-/* =====================================================
-   🏫 CLASS FULL DETAILS (ADMIN)
-===================================================== */
+/* ================= CLASS ================= */
 router.get(
   "/classes/:id",
   authMiddleware,

@@ -8,6 +8,8 @@ const Assignment = require("../models/Assignment");
 const Submission = require("../models/Submission");
 const Announcement = require("../models/Announcement");
 const Material = require("../models/Material");
+const mongoose = require("mongoose");
+
 
 
 /* =====================================================
@@ -175,18 +177,21 @@ exports.getClassByIdAdmin = async (req, res) => {
 ===================================================== */
 exports.getTeacherClassesAdmin = async (req, res) => {
   try {
-    const { teacherId } = req.params;
+    const teacherId = req.params.id;
 
-    const classes = await Class.find({ teacher: teacherId })
+    const classes = await Class.find({
+      teacher: new mongoose.Types.ObjectId(teacherId)
+    })
       .populate("students", "name email")
-      .select("name subject students");
+      .sort({ createdAt: -1 });
 
-    res.json({ classes });
-  } catch (error) {
-    console.error("getTeacherClassesAdmin error:", error);
-    res.status(500).json({ message: "Failed to load teacher classes" });
+    res.status(200).json({ classes });
+  } catch (err) {
+    console.error("Get teacher classes error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 exports.getTeacherSingleClassAdmin = async (req, res) => {
   try {
