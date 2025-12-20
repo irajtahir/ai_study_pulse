@@ -4,17 +4,17 @@ async function sendEmail(to, subject, text) {
   try {
     // Transporter setup (Gmail example, ya apne SMTP use karo)
     const transporter = nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
-      secure: process.env.EMAIL_SECURE === "true",
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      secure: process.env.SMTP_SECURE === "true",
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
 
     const info = await transporter.sendMail({
-      from: `"AI StudyPulse" <${process.env.EMAIL_USER}>`,
+      from: `"AI StudyPulse" <${process.env.SMTP_USER}>`,
       to,
       subject,
       text,
