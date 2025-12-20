@@ -19,6 +19,8 @@ const {
   createAssignment,
   getAssignmentsByClass,
   getSubmissionsByAssignment,
+  updateAssignment,
+  deleteAssignment,
 } = require("../controllers/assignmentController");
 
 const {
@@ -57,6 +59,20 @@ router.get(
   auth,
   getSubmissionsByAssignment
 );
+router.put(
+  "/classes/:classId/assignments/:assignmentId",
+  auth,
+  role("teacher"),
+  updateAssignment
+);
+
+router.delete(
+  "/classes/:classId/assignments/:assignmentId",
+  auth,
+  role("teacher"),
+  deleteAssignment
+);
+
 
 // Material routes
 router.post(

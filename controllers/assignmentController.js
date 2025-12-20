@@ -40,8 +40,76 @@ const createAssignment = async (req, res) => {
   res.status(201).json(assignment);
 };
 
+const updateAssignment = async (req, res) => {
+  try {
+    const { classId, assignmentId } = req.params;
+    const { title, instructions, dueDate } = req.body;
+
+    // Check class & teacher
+    const classObj = await Class.findById(classId);
+    if (!classObj)
+      return res.status(404).json({ message: "Class not found" });
+
+    if (classObj.teacher.toString() !== req.user.id)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    const assignment = await Assignment.findOne({
+      _id: assignmentId,
+      class: classId,
+    });
+
+    if (!assignment)
+      return res.status(404).json({ message: "Assignment not found" });
+
+    assignment.title = title ?? assignment.title;
+    assignment.instructions = instructions ?? assignment.instructions;
+    assignment.dueDate = dueDate ?? assignment.dueDate;
+
+    await assignment.save();
+
+    res.json({ message: "Assignment updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/**
+ * DELETE ASSIGNMENT
+ */
+const deleteAssignment = async (req, res) => {
+  try {
+    const { classId, assignmentId } = req.params;
+
+    const classObj = await Class.findById(classId);
+    if (!classObj)
+      return res.status(404).json({ message: "Class not found" });
+
+    if (classObj.teacher.toString() !== req.user.id)
+      return res.status(403).json({ message: "Unauthorized" });
+
+    const assignment = await Assignment.findOne({
+      _id: assignmentId,
+      class: classId,
+    });
+
+    if (!assignment)
+      return res.status(404).json({ message: "Assignment not found" });
+
+    await assignment.deleteOne();
+
+    res.json({ message: "Assignment deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 module.exports = {
   createAssignment,
   getAssignmentsByClass,
   getSubmissionsByAssignment,
+  updateAssignment,
+  deleteAssignment,
 };
