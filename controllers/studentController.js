@@ -194,3 +194,37 @@ exports.unsendSubmission = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Student: Reply to announcement
+exports.replyToAnnouncement = async (req, res) => {
+  try {
+    const { classId, announcementId } = req.params;
+    const { text } = req.body;
+
+    if (!text?.trim()) return res.status(400).json({ message: "Reply text required" });
+
+    const cls = await Class.findById(classId);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    // Check if student belongs to class
+    if (!cls.students.includes(req.user._id)) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const announcement = await Announcement.findById(announcementId);
+    if (!announcement) return res.status(404).json({ message: "Announcement not found" });
+
+    // Add reply
+    announcement.replies.push({
+      student: req.user._id,
+      studentName: req.user.name,
+      text: text.trim(),
+    });
+
+    await announcement.save();
+    res.json({ message: "Reply added successfully", replies: announcement.replies });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

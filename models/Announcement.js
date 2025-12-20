@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+const replySchema = new mongoose.Schema({
+  student: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  studentName: { type: String },
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
 const AnnouncementSchema = new mongoose.Schema({
   class: {
     type: mongoose.Schema.Types.ObjectId,
@@ -21,7 +28,10 @@ const AnnouncementSchema = new mongoose.Schema({
   createdAt: {
     type: Date,
     default: Date.now
-  }
-});
+  },
+  replies: [replySchema],
+},
+{timestamps: true}
+);
 
 module.exports = mongoose.model("Announcement", AnnouncementSchema);
