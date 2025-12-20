@@ -11,25 +11,23 @@ router.post('/login', login);
 router.get('/me', authMiddleware, getMe); 
 
 router.post("/forgot-password", async (req, res) => {
+  const { email } = req.body;
+
   try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });  // User ab defined hai
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const token = crypto.randomBytes(32).toString("hex");
-    user.resetToken = token;
-    user.resetTokenExpiry = Date.now() + 3600000; // 1 hour
-    await user.save();
+    const token = user.generateResetToken(); // User model me yeh function hona chahiye
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
 
-    // Send reset link via email (make sure sendEmail util exists)
-    await sendEmail(user.email, "Password Reset", `Link: ${process.env.FRONTEND_URL}/reset-password/${token}`);
-
-    res.json({ message: "Reset link sent to email" });
+    await sendEmail(user.email, "Password Reset", `Click here to reset: ${resetLink}`);
+    res.json({ message: "Reset link sent to your email" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(500).json({ message: "Failed to send reset link" });
   }
 });
+
 
 
 
