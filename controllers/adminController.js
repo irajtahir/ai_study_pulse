@@ -230,8 +230,6 @@ exports.getClassByIdTeacherAdmin = async (req, res) => {
     const cls = await Class.findById(classId)
       .populate("teacher", "name email")
       .populate("students", "name email")
-      .populate("materials")
-      .populate("announcements")
       .lean();
 
     if (!cls) {
@@ -242,12 +240,23 @@ exports.getClassByIdTeacherAdmin = async (req, res) => {
       .sort({ createdAt: -1 })
       .lean();
 
+    const announcements = await Announcement.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const materials = await Material.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .lean();
+
     res.status(200).json({
       ...cls,
-      assignments
+      assignments,
+      announcements,
+      materials,
     });
   } catch (err) {
     console.error("Get class by teacher admin error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
+
