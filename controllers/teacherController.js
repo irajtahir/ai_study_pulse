@@ -135,6 +135,56 @@ exports.getAnnouncementsForClass = async (req, res) => {
   }
 };
 
+// Edit announcement
+exports.editAnnouncement = async (req, res) => {
+  try {
+    const { id, announcementId } = req.params;
+    const { text } = req.body;
+
+    if (!text) return res.status(400).json({ message: "Announcement text is required" });
+
+    const announcement = await Announcement.findById(announcementId);
+    if (!announcement) return res.status(404).json({ message: "Announcement not found" });
+
+    const cls = await Class.findById(id);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    if (cls.teacher.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Access denied" });
+
+    announcement.text = text;
+    await announcement.save();
+
+    res.json({ message: "Announcement updated successfully", announcement });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete announcement
+exports.deleteAnnouncement = async (req, res) => {
+  try {
+    const { id, announcementId } = req.params;
+
+    const announcement = await Announcement.findById(announcementId);
+    if (!announcement) return res.status(404).json({ message: "Announcement not found" });
+
+    const cls = await Class.findById(id);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    if (cls.teacher.toString() !== req.user._id.toString())
+      return res.status(403).json({ message: "Access denied" });
+
+    await announcement.deleteOne();
+    res.json({ message: "Announcement deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
 exports.createAssignment = async (req, res) => {
   try {
     const { title, description, dueDate } = req.body;

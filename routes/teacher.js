@@ -10,6 +10,8 @@ const {
   getClassById,
   createAnnouncement,
   getAnnouncementsForClass,
+  editAnnouncement,      // add
+  deleteAnnouncement,    // add
 } = require("../controllers/teacherController");
 
 const {
@@ -27,9 +29,13 @@ router.post("/classes", auth, role("teacher"), createClass);
 router.get("/classes", auth, role("teacher"), getTeacherClasses);
 router.get("/classes/:id", auth, getClassById);
 
+// Announcement routes
 router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
 router.get("/classes/:id/announcements", auth, getAnnouncementsForClass);
+router.put("/classes/:id/announcement/:announcementId", auth, role("teacher"), editAnnouncement); // new
+router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement); // new
 
+// Assignment routes
 router.post(
   "/classes/:classId/assignments",
   auth,
@@ -37,7 +43,6 @@ router.post(
   assignments.single("file"),
   createAssignment
 );
-
 router.get("/classes/:classId/assignments", auth, getAssignmentsByClass);
 router.get(
   "/classes/:classId/assignments/:assignmentId/submissions",
@@ -45,6 +50,7 @@ router.get(
   getSubmissionsByAssignment
 );
 
+// Material routes
 router.post(
   "/classes/:id/material",
   auth,
@@ -52,7 +58,6 @@ router.post(
   materials.single("file"),
   uploadMaterial
 );
-
 router.get("/classes/:id/materials", auth, getMaterialsForClass);
 
 module.exports = router;

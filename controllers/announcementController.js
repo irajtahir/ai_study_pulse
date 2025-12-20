@@ -1,4 +1,3 @@
-// backend/controllers/announcementController.js
 const Announcement = require("../models/Announcement");
 const Class = require("../models/Class");
 
