@@ -26,6 +26,8 @@ const {
 const {
   uploadMaterial,
   getMaterialsForClass,
+  updateMaterial,
+  deleteMaterial,
 } = require("../controllers/materialController");
 
 router.post("/classes", auth, role("teacher"), createClass);
@@ -83,5 +85,21 @@ router.post(
   uploadMaterial
 );
 router.get("/classes/:id/materials", auth, getMaterialsForClass);
+
+router.put(
+  "/classes/:classId/material/:materialId",
+  auth,
+  role("teacher"),
+  materials.single("file"),
+  updateMaterial
+);
+
+router.delete(
+  "/classes/:classId/material/:materialId",
+  auth,
+  role("teacher"),
+  deleteMaterial
+);
+
 
 module.exports = router;

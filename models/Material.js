@@ -16,11 +16,11 @@ const MaterialSchema = new mongoose.Schema({
     required: true
   },
   content: {
-    type: String, // 👈 teacher instructions / description
+    type: String, 
     default: ""
   },
   fileUrl: {
-    type: String, // optional file
+    type: String, 
     default: ""
   },
   createdAt: {

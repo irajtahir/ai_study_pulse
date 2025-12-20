@@ -49,3 +49,45 @@ exports.getMaterialsForClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.updateMaterial = async (req, res) => {
+  try {
+    const { materialId } = req.params;
+    const { title, content } = req.body;
+
+    const material = await Material.findById(materialId);
+    if (!material) {
+      return res.status(404).json({ message: "Material not found" });
+    }
+
+    if (title !== undefined) material.title = title;
+    if (content !== undefined) material.content = content;
+
+    if (req.file) {
+      material.fileUrl = req.file.path; // cloudinary OR uploads
+    }
+
+    await material.save();
+    res.json({ message: "Material updated successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to update material" });
+  }
+};
+
+exports.deleteMaterial = async (req, res) => {
+  try {
+    const { classId, materialId } = req.params;
+
+    await Material.findByIdAndDelete(materialId);
+
+    await Class.findByIdAndUpdate(classId, {
+      $pull: { materials: materialId },
+    });
+
+    res.json({ message: "Material deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to delete material" });
+  }
+};
