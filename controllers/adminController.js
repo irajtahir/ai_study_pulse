@@ -225,29 +225,26 @@ exports.getTeacherSingleClassAdmin = async (req, res) => {
 ===================================================== */
 exports.getClassByIdTeacherAdmin = async (req, res) => {
   try {
-    const classId = req.params.classId;
+    const { classId } = req.params;
 
     const cls = await Class.findById(classId)
       .populate("teacher", "name email")
       .populate("students", "name email")
+      .populate("materials")
+      .populate("announcements")
       .lean();
 
-    if (!cls) return res.status(404).json({ message: "Class not found" });
+    if (!cls) {
+      return res.status(404).json({ message: "Class not found" });
+    }
 
-    const [assignments, announcements, materials] = await Promise.all([
-      Assignment.find({ class: classId }).sort({ createdAt: -1 }).lean(),
-      Announcement.find({ class: classId })
-        .sort({ createdAt: -1 })
-        .populate("teacher", "name email")
-        .lean(),
-      Material.find({ class: classId }).sort({ createdAt: -1 }).lean(),
-    ]);
+    const assignments = await Assignment.find({ class: classId })
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       ...cls,
-      assignments,
-      announcements,
-      materials,
+      assignments
     });
   } catch (err) {
     console.error("Get class by teacher admin error:", err);

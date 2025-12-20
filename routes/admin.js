@@ -48,7 +48,7 @@ router.get(
 
 // ✅ Single class full details (teacher class)
 router.get(
-  "/teacher/class/:classId",
+  "/teacher/classes/:classId",
   authMiddleware,
   roleMiddleware("admin"),
   getClassByIdTeacherAdmin
