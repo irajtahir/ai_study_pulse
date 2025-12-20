@@ -18,13 +18,24 @@ const getAssignmentsByClass = async (req, res) => {
   }
 };
 
-/* Teacher: Get submissions for an assignment */
+/* ✅ FIXED: Teacher: Get submissions for an assignment */
 const getSubmissionsByAssignment = async (req, res) => {
   try {
-    const subs = await Submission.find({
+    const assignment = await Assignment.findById(req.params.assignmentId);
+
+    if (!assignment) {
+      return res.status(404).json({ message: "Assignment not found" });
+    }
+
+    const submissions = await Submission.find({
       assignment: req.params.assignmentId,
     }).populate("student", "name email");
-    res.json(subs);
+
+    // ✅ VERY IMPORTANT RESPONSE STRUCTURE
+    res.json({
+      assignment,
+      submissions,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
@@ -43,7 +54,7 @@ const createAssignment = async (req, res) => {
       title: req.body.title,
       instructions: req.body.instructions,
       dueDate: req.body.dueDate || null,
-      marks: req.body.marks || null,
+      marks: req.body.marks ?? 0,
       attachment: req.file ? req.file.path : null,
     });
 
@@ -70,7 +81,8 @@ const updateAssignment = async (req, res) => {
       class: classId,
     });
 
-    if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+    if (!assignment)
+      return res.status(404).json({ message: "Assignment not found" });
 
     assignment.title = title ?? assignment.title;
     assignment.instructions = instructions ?? assignment.instructions;
@@ -105,7 +117,8 @@ const deleteAssignment = async (req, res) => {
       class: classId,
     });
 
-    if (!assignment) return res.status(404).json({ message: "Assignment not found" });
+    if (!assignment)
+      return res.status(404).json({ message: "Assignment not found" });
 
     await assignment.deleteOne();
 
@@ -132,7 +145,8 @@ const assignMarksToSubmission = async (req, res) => {
       assignment: assignmentId,
     });
 
-    if (!submission) return res.status(404).json({ message: "Submission not found" });
+    if (!submission)
+      return res.status(404).json({ message: "Submission not found" });
 
     submission.marks = marks;
     await submission.save();

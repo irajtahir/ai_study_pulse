@@ -18,10 +18,6 @@ const SubmissionSchema = new mongoose.Schema({
   answerText: {
     type: String
   },
-  marks: {
-    type: Number,
-    default: null
-  },
   feedback: {
     type: String
   },
