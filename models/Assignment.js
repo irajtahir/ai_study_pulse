@@ -22,8 +22,9 @@ const AssignmentSchema = new mongoose.Schema({
     type: Date,
   },
   attachment: {
-    type: String, // file URL
+    type: String,
   },
+  marks: { type: Number, default: null },
   createdAt: {
     type: Date,
     default: Date.now,

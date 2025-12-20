@@ -10,8 +10,8 @@ const {
   getClassById,
   createAnnouncement,
   getAnnouncementsForClass,
-  editAnnouncement,      
-  deleteAnnouncement,    
+  editAnnouncement,
+  deleteAnnouncement,
   removeStudentFromClass,
 } = require("../controllers/teacherController");
 
@@ -21,6 +21,7 @@ const {
   getSubmissionsByAssignment,
   updateAssignment,
   deleteAssignment,
+  assignMarksToSubmission,
 } = require("../controllers/assignmentController");
 
 const {
@@ -30,15 +31,22 @@ const {
   deleteMaterial,
 } = require("../controllers/materialController");
 
+// =====================
+// Class Routes
+// =====================
 router.post("/classes", auth, role("teacher"), createClass);
 router.get("/classes", auth, role("teacher"), getTeacherClasses);
 router.get("/classes/:id", auth, getClassById);
 
-// Announcement routes
+// =====================
+// Announcement Routes
+// =====================
 router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
 router.get("/classes/:id/announcements", auth, getAnnouncementsForClass);
 router.put("/classes/:id/announcement/:announcementId", auth, role("teacher"), editAnnouncement);
-router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement); 
+router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement);
+
+// Remove student from class
 router.delete(
   "/classes/:classId/students/:studentId",
   auth,
@@ -46,28 +54,36 @@ router.delete(
   removeStudentFromClass
 );
 
-
-// Assignment routes
+// =====================
+// Assignment Routes
+// =====================
 router.post(
   "/classes/:classId/assignments",
   auth,
   role("teacher"),
-  assignments.single("file"),
+  assignments.single("attachment"),
   createAssignment
 );
+
+// Get assignments for a class
 router.get("/classes/:classId/assignments", auth, getAssignmentsByClass);
+
+// Get submissions for an assignment
 router.get(
   "/classes/:classId/assignments/:assignmentId/submissions",
   auth,
   getSubmissionsByAssignment
 );
+
 router.put(
   "/classes/:classId/assignments/:assignmentId",
   auth,
   role("teacher"),
+  assignments.single("attachment"),
   updateAssignment
 );
 
+// Delete assignment
 router.delete(
   "/classes/:classId/assignments/:assignmentId",
   auth,
@@ -75,8 +91,17 @@ router.delete(
   deleteAssignment
 );
 
+// Assign marks to a student's submission
+router.put(
+  "/classes/:classId/assignments/:assignmentId/submissions/:submissionId/marks",
+  auth,
+  role("teacher"),
+  assignMarksToSubmission
+);
 
-// Material routes
+// =====================
+// Material Routes
+// =====================
 router.post(
   "/classes/:id/material",
   auth,
@@ -84,8 +109,11 @@ router.post(
   materials.single("file"),
   uploadMaterial
 );
+
+// Get materials for a class
 router.get("/classes/:id/materials", auth, getMaterialsForClass);
 
+// Update material (optional file, title, content)
 router.put(
   "/classes/:classId/material/:materialId",
   auth,
@@ -94,12 +122,12 @@ router.put(
   updateMaterial
 );
 
+// Delete material
 router.delete(
   "/classes/:classId/material/:materialId",
   auth,
   role("teacher"),
   deleteMaterial
 );
-
 
 module.exports = router;

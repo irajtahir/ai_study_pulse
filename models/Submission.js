@@ -12,8 +12,9 @@ const SubmissionSchema = new mongoose.Schema({
     required: true
   },
   file: {
-    type: String // file URL (later)
+    type: String 
   },
+  marks: { type: Number, default: null },
   answerText: {
     type: String
   },
