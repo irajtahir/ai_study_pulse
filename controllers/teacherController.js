@@ -1,4 +1,5 @@
 const Class = require("../models/Class");
+const User = require("../models/User");
 const crypto = require("crypto");
 const Assignment = require("../models/Assignment");
 const Material = require("../models/Material");
@@ -224,6 +225,29 @@ exports.getAssignmentSubmissions = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json(submissions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.removeStudentFromClass = async (req, res) => {
+  const { classId, studentId } = req.params;
+
+  try {
+    // 1. Remove student from class's students array
+    const updatedClass = await Class.findByIdAndUpdate(
+      classId,
+      { $pull: { students: studentId } },
+      { new: true }
+    );
+
+    if (!updatedClass) return res.status(404).json({ message: "Class not found" });
+
+    // 2. Optionally, remove class from student's enrolled classes
+    await User.findByIdAndUpdate(studentId, { $pull: { classes: classId } });
+
+    res.json({ message: "Student removed successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });

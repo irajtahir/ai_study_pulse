@@ -10,8 +10,9 @@ const {
   getClassById,
   createAnnouncement,
   getAnnouncementsForClass,
-  editAnnouncement,      // add
-  deleteAnnouncement,    // add
+  editAnnouncement,      
+  deleteAnnouncement,    
+  removeStudentFromClass,
 } = require("../controllers/teacherController");
 
 const {
@@ -32,8 +33,15 @@ router.get("/classes/:id", auth, getClassById);
 // Announcement routes
 router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
 router.get("/classes/:id/announcements", auth, getAnnouncementsForClass);
-router.put("/classes/:id/announcement/:announcementId", auth, role("teacher"), editAnnouncement); // new
-router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement); // new
+router.put("/classes/:id/announcement/:announcementId", auth, role("teacher"), editAnnouncement);
+router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement); 
+router.delete(
+  "/classes/:classId/students/:studentId",
+  auth,
+  role("teacher"),
+  removeStudentFromClass
+);
+
 
 // Assignment routes
 router.post(
