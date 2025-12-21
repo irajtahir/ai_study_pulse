@@ -94,4 +94,27 @@ const deleteNote = async (req, res) => {
   }
 };
 
-module.exports = { createNote, getNotes, getNoteById, updateNote, deleteNote };
+const getStats = async (req, res) => {
+  try {
+    const totalStudyHours = 1200; // example placeholder
+    const completionRate = 75; // example placeholder
+
+    // Notes stats
+    const notes = await Note.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const lastNote = notes[0] || null;
+
+    res.json({
+      totalStudyHours,
+      completionRate,
+      notesCount: notes.length,
+      lastNote: lastNote
+        ? { title: lastNote.topic, updatedAt: lastNote.updatedAt }
+        : null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { createNote, getNotes, getNoteById, updateNote, deleteNote, getStats };
