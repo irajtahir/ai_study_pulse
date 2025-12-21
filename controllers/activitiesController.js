@@ -88,21 +88,43 @@ exports.deleteActivity = async (req, res) => {
   }
 };
 
-/**
- * Get user stats for dashboard
- */
 exports.getStats = async (req, res) => {
   try {
-    const activities = await Activity.find({ user: req.user._id });
-    // ...existing activities stats code
+    const activities = await Activity.find({ user: req.user._id }).sort({ createdAt: 1 });
+    const totalStudyHours = activities.reduce((acc, a) => acc + (a.durationMinutes || 0), 0);
+    const completedTasks = activities.filter(a => a.completed).length;
+    const completionRate = activities.length ? Math.round((completedTasks / activities.length) * 100) : 0;
 
-    // Fetch notes stats
-    const notesStatsRes = await getNotesStats(req, res, true); // see below for modification
-    const lastNote = notesStatsRes.lastNote || null;
+    // Weekly graph (last 7 days)
+    const today = new Date();
+    const weeklyGraph = Array(7).fill(0);
+    activities.forEach(a => {
+      const diff = Math.floor((today - new Date(a.createdAt)) / (1000 * 60 * 60 * 24));
+      if (diff >= 0 && diff < 7) weeklyGraph[6 - diff] += a.durationMinutes || 0;
+    });
 
-    res.json({ totalStudyHours, completionRate, weeklyGraph, difficultyAnalysis, aggregatedInsights, lastNote });
+    // Difficulty Analysis
+    const difficultyAnalysis = { easy: 0, medium: 0, hard: 0 };
+    activities.forEach(a => {
+      if (a.difficulty) difficultyAnalysis[a.difficulty] = (difficultyAnalysis[a.difficulty] || 0) + 1;
+    });
+
+    // Last note & class (safe)
+    const notesStatsRes = await getNotesStats(req, res, true);
+    const lastNote = notesStatsRes?.lastNote || null;
+    const lastClass = activities[activities.length - 1]?.subject || null;
+
+    res.json({
+      totalStudyHours,
+      completionRate,
+      weeklyGraph,
+      difficultyAnalysis,
+      lastNote,
+      lastClass,
+      classesCount: activities.length
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error" });
   }
 };
