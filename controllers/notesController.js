@@ -94,27 +94,21 @@ const deleteNote = async (req, res) => {
   }
 };
 
-const getStats = async (req, res) => {
-  try {
-    const totalStudyHours = 1200; // example placeholder
-    const completionRate = 75; // example placeholder
+const getStats = async (req, res, internal = false) => {
+  const notes = await Note.find({ user: req.user._id }).sort({ createdAt: -1 });
+  const lastNote = notes[0] || null;
+  const statsObj = {
+    totalStudyHours: 1200,
+    completionRate: 75,
+    notesCount: notes.length,
+    lastNote: lastNote
+      ? { title: lastNote.topic, updatedAt: lastNote.updatedAt }
+      : null,
+  };
 
-    // Notes stats
-    const notes = await Note.find({ user: req.user._id }).sort({ createdAt: -1 });
-    const lastNote = notes[0] || null;
-
-    res.json({
-      totalStudyHours,
-      completionRate,
-      notesCount: notes.length,
-      lastNote: lastNote
-        ? { title: lastNote.topic, updatedAt: lastNote.updatedAt }
-        : null,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
-  }
+  if (internal) return statsObj; // for internal calls
+  res.json(statsObj); // for external API
 };
+
 
 module.exports = { createNote, getNotes, getNoteById, updateNote, deleteNote, getStats };
