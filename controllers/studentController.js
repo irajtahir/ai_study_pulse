@@ -50,6 +50,19 @@ exports.getStudentClassDetails = async (req, res) => {
   }
 };
 
+exports.getStudentClassesCount = async (req, res) => {
+  try {
+    const classes = await Class.find({ students: req.user._id });
+    res.json({
+      count: classes.length,
+      lastClass: classes[classes.length - 1] || null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 // GET Student Class Dashboard
 exports.getClassDashboard = async (req, res) => {
   try {

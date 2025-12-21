@@ -11,6 +11,7 @@ const {
   unsendSubmission,
   getClassDashboard,
   replyToAnnouncement,
+  getStudentClassesCount,
 } = require("../controllers/studentController");
 
 const { getAnnouncementsForClass } = require("../controllers/announcementController");
@@ -22,6 +23,7 @@ router.get("/classes/:classId", auth, getStudentClassDetails);
 router.get("/classes/:classId/dashboard", auth, getClassDashboard);
 router.get("/classes/:classId/assignments", auth, getAssignmentsForClass);
 router.get("/classes/:classId/announcements", auth, getAnnouncementsForClass);
+router.get("/classes/count", auth, getStudentClassesCount);
 router.get("/classes/:classId/materials", auth, getMaterialsForClass);
 router.post(
   "/classes/:classId/announcements/:announcementId/reply",
