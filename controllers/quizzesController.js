@@ -31,9 +31,6 @@ exports.getWeakTopics = async (req, res) => {
 };
 
 /**
- * 2) Generate a quiz using AI (with fallback)
- */
-/**
  * 2) Generate a quiz using AI (with fallback & cleaned options)
  */
 exports.generateQuiz = async (req, res) => {
@@ -72,7 +69,6 @@ Rules:
     let parsed = null;
 
     try {
-      // Extract JSON
       const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
       if (!jsonMatch) throw new Error("No valid JSON found");
 
@@ -81,12 +77,10 @@ Rules:
       if (!parsed.questions || !Array.isArray(parsed.questions))
         throw new Error("Invalid AI JSON structure");
 
-      // Clean options: trim, remove empty strings
       parsed.questions = parsed.questions.map((q, idx) => {
         const questionText = q.question?.trim() || `Sample Q${idx + 1}: ${topic}`;
         let options = Array.isArray(q.options) ? q.options.map((o) => o?.trim()).filter(Boolean) : [];
         if (options.length !== 4) {
-          // fallback if AI gave less than 4 options
           options = ["Option A", "Option B", "Option C", "Option D"];
         }
         const answer = q.answer?.trim() && options.includes(q.answer?.trim()) ? q.answer.trim() : options[0];
@@ -186,7 +180,7 @@ exports.submitQuiz = async (req, res) => {
       scorePercent: Math.round(quiz.score),
       scoreRaw: correctCount,
       total: quiz.questions.length,
-      userAnswers: answers, // send user answers for frontend highlighting
+      userAnswers: answers, 
     });
   } catch (err) {
     console.error(err);
@@ -194,3 +188,24 @@ exports.submitQuiz = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/**
+ * 6) Delete quiz
+ */
+exports.deleteQuiz = async (req, res) => {
+  try {
+    const quiz = await Quiz.findById(req.params.id);
+    if (!quiz) return res.status(404).json({ message: "Quiz not found" });
+
+    // ownership check
+    if (String(quiz.user) !== String(req.user._id))
+      return res.status(403).json({ message: "Not authorized" });
+
+    await quiz.deleteOne();
+    res.json({ message: "Quiz deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
