@@ -12,6 +12,7 @@ const {
   getClassDashboard,
   replyToAnnouncement,
   getStudentClassesCount,
+  leaveClass,
 } = require("../controllers/studentController");
 
 const { getAnnouncementsForClass } = require("../controllers/announcementController");
@@ -30,5 +31,7 @@ router.post(
   auth,
   replyToAnnouncement
 );
+router.delete("/classes/:classId/leave", auth, leaveClass);
+
 
 module.exports = router;

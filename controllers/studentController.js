@@ -242,3 +242,30 @@ exports.replyToAnnouncement = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* 🚪 Leave Class (Student) */
+exports.leaveClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    const cls = await Class.findById(classId);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    // check student
+    if (!cls.students.includes(req.user._id)) {
+      return res.status(400).json({ message: "You are not enrolled in this class" });
+    }
+
+    // remove student
+    cls.students = cls.students.filter(
+      (id) => id.toString() !== req.user._id.toString()
+    );
+
+    await cls.save();
+
+    res.json({ message: "You have left the class successfully" });
+  } catch (err) {
+    console.error("Leave class error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
