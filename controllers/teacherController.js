@@ -253,3 +253,31 @@ exports.removeStudentFromClass = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+/* 🗑 Delete Class (Teacher Only) */
+exports.deleteClass = async (req, res) => {
+  try {
+    const { classId } = req.params;
+
+    const cls = await Class.findById(classId);
+    if (!cls) return res.status(404).json({ message: "Class not found" });
+
+    // ✅ Only owner teacher can delete
+    if (cls.teacher.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    // 🧹 Clean related data
+    await Assignment.deleteMany({ class: classId });
+    await Material.deleteMany({ class: classId });
+    await Announcement.deleteMany({ class: classId });
+
+    // 🗑 Delete class
+    await cls.deleteOne();
+
+    res.json({ message: "Class deleted successfully" });
+  } catch (err) {
+    console.error("Delete class error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

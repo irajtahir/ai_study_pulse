@@ -13,6 +13,7 @@ const {
   editAnnouncement,
   deleteAnnouncement,
   removeStudentFromClass,
+  deleteClass,
 } = require("../controllers/teacherController");
 
 const {
@@ -37,14 +38,31 @@ const {
 router.post("/classes", auth, role("teacher"), createClass);
 router.get("/classes", auth, role("teacher"), getTeacherClasses);
 router.get("/classes/:id", auth, getClassById);
+// Delete class
+router.delete("/classes/:classId", auth, role("teacher"), deleteClass);
 
 // =====================
 // Announcement Routes
 // =====================
-router.post("/classes/:id/announcement", auth, role("teacher"), createAnnouncement);
+router.post(
+  "/classes/:id/announcement",
+  auth,
+  role("teacher"),
+  createAnnouncement
+);
 router.get("/classes/:id/announcements", auth, getAnnouncementsForClass);
-router.put("/classes/:id/announcement/:announcementId", auth, role("teacher"), editAnnouncement);
-router.delete("/classes/:id/announcement/:announcementId", auth, role("teacher"), deleteAnnouncement);
+router.put(
+  "/classes/:id/announcement/:announcementId",
+  auth,
+  role("teacher"),
+  editAnnouncement
+);
+router.delete(
+  "/classes/:id/announcement/:announcementId",
+  auth,
+  role("teacher"),
+  deleteAnnouncement
+);
 
 // Remove student from class
 router.delete(
